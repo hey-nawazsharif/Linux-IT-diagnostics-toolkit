@@ -79,10 +79,19 @@ def disk_check(path: Path, *, label: str | None = None) -> dict[str, str]:
         return check("disk", safe_label, "skip", "Unavailable", "Cannot read disk capacity for the selected path.", category="storage")
 
 
-def inode_check(path: Path, *, stat=os.statvfs) -> dict[str, str]:
-    """Read available filesystem inode counts without listing user files."""
+def inode_check(path: Path, *, stat=None) -> dict[str, str]:
+    """Read available filesystem inode counts without listing user files.
+
+    os.statvfs does not exist on Windows. Resolve it only at call time so
+    importing the package works on Windows even though inodes are Linux-only.
+    """
+    stat_fn = stat if stat is not None else getattr(os, "statvfs", None)
+    if stat_fn is None:
+        return check("inodes", "Filesystem inode availability", "skip", "Not supported",
+                     "This platform does not provide POSIX inode counters.",
+                     category="storage")
     try:
-        fs = stat(path)
+        fs = stat_fn(path)
         total = int(fs.f_files)
         available = int(fs.f_favail)
         if total <= 0:
