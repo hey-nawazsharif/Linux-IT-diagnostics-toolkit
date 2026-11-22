@@ -44,7 +44,7 @@ jobs:
           assert sample['mode'] == 'SIMULATED DEMO'
           assert 'id="run"' in website
           assert 'id="report-file"' in website
-          assert 'src="./app.js?v=20261122-4"' in website
+          assert 'src="./app.js?v=20261123-1"' in website
           assert 'id="quick-result"' in website
           assert 'id="download-link"' in website
           assert 'id="action-plan-list"' in website

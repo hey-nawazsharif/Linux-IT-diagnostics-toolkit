@@ -21,11 +21,13 @@ jobs:
           BASE='https://hey-nawazsharif.github.io/Linux-IT-diagnostics-toolkit'
           fresh=0
           for attempt in $(seq 1 24); do
-            if curl --fail --silent --show-error --location --max-time 15 "$BASE/?build=20261122-4" -o /tmp/opspulse.html &&
-               grep -Fq 'v0.4 · Real Linux triage' /tmp/opspulse.html &&
+            if curl --fail --silent --show-error --location --max-time 15 "$BASE/?build=20261123-1" -o /tmp/opspulse.html &&
+               grep -Fq 'v0.5' /tmp/opspulse.html &&
                grep -Fq 'id="quick-result"' /tmp/opspulse.html &&
                grep -Fq 'id="download-link"' /tmp/opspulse.html &&
-               grep -Fq 'id="action-plan-list"' /tmp/opspulse.html; then
+               grep -Fq 'id="action-plan-list"' /tmp/opspulse.html &&
+               grep -Fq 'System diagnostics' /tmp/opspulse.html &&
+               grep -Fq 'class="rail"' /tmp/opspulse.html; then
               fresh=1
               break
             fi
@@ -34,13 +36,13 @@ jobs:
           done
           test "$fresh" -eq 1 || { echo 'Live website still missing latest mobile dashboard'; exit 1; }
           echo 'PASS: latest mobile dashboard HTML live'
-          curl --fail --silent --show-error --location --max-time 20 "$BASE/app.js?v=20261122-4" -o /tmp/opspulse.js
+          curl --fail --silent --show-error --location --max-time 20 "$BASE/app.js?v=20261123-1" -o /tmp/opspulse.js
           grep -Fq 'invalidatePriorExport' /tmp/opspulse.js
           grep -Fq 'FileReader' /tmp/opspulse.js
           grep -Fq 'renderActionPlan' /tmp/opspulse.js
           grep -Fq 'Save JSON file or copy the JSON' /tmp/opspulse.js
           echo 'PASS: versioned app JavaScript deployed with Safari fixes'
-          curl --fail --silent --show-error --location --max-time 20 "$BASE/report.json?v=20261122-4" -o /tmp/opspulse.json
+          curl --fail --silent --show-error --location --max-time 20 "$BASE/report.json?v=20261123-1" -o /tmp/opspulse.json
           python3 - <<'PY'
           import json
           with open('/tmp/opspulse.json') as f: data=json.load(f)
