@@ -64,6 +64,14 @@ window.addEventListener('load', async function () {
     check(get('json-data').value.includes('2.11 load'), 'JSON preview not reflecting imported file');
     check(get('download-link').download.includes('unverified'), 'Imported download needs unverified label');
     check(get('feedback').textContent.includes('download'), 'download feedback missing');
+
+    // Regression: a new run must invalidate the old JSON download URL and
+    // keep the on-screen preview in sync with the newly selected report.
+    get('scenario').value = 'healthy';
+    get('run').click();
+    check(get('download-link').hidden === true, 'stale download link must disappear after a new run');
+    check(get('json-data').value.includes('48.0% used'), 'JSON preview did not update after scenario changed');
+    check(!get('json-data').value.includes('2.11 load'), 'stale imported CPU data remains visible');
     check(document.documentElement.scrollWidth <= window.innerWidth + 2,
       'mobile horizontal overflow: '+document.documentElement.scrollWidth+' vs '+window.innerWidth);
     document.body.setAttribute('data-opspulse-smoke','PASS');
