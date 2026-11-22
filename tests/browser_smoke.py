@@ -25,6 +25,8 @@ window.addEventListener('load', async function () {
     check(document.querySelector('#stats .stat.critical strong').textContent === '2', 'critical scenario count');
     check(get('diagnostic-grid').textContent.includes('98.0% in use'), 'critical RAM value not rendered');
     check(get('quick-result').textContent.includes('2 critical'), 'visible critical summary did not update');
+    check(get('action-plan-list').querySelectorAll('.action-card').length === 7, 'critical scenario action plan should show 7 issues');
+    check(get('action-plan-list').querySelector('.action-card').textContent.includes('CRITICAL'), 'first action not critical');
 
     document.querySelector('[data-filter="critical"]').click();
     check(document.querySelectorAll('#diagnostic-grid article').length === 2, 'status filter not working');
@@ -44,6 +46,7 @@ window.addEventListener('load', async function () {
     get('reset').click();
     check(document.querySelectorAll('#diagnostic-grid article').length === 8, 'reset cards');
     check(document.querySelector('#stats .stat.warn strong').textContent === '1', 'reset warning count');
+    check(get('action-plan-list').querySelectorAll('.action-card').length === 2, 'reset triage not restored');
 
     const upload = get('report-file');
     const mock = JSON.parse(get('seed-report').textContent);
@@ -57,6 +60,7 @@ window.addEventListener('load', async function () {
     check(get('mode-badge').textContent.includes('IMPORTED REPORT'), 'imported label');
     check(get('context').textContent.includes('NOT been verified'), 'unverified context label');
     check(get('diagnostic-grid').textContent.includes('2.11 load'), 'import not rendered');
+    check(get('action-plan-list').textContent.includes('Root filesystem'), 'imported action plan missing');
 
     get('export').click();
     check(get('download-link').hidden === false, 'iPhone manual download link not visible');
@@ -72,6 +76,7 @@ window.addEventListener('load', async function () {
     check(get('download-link').hidden === true, 'stale download link must disappear after a new run');
     check(get('json-data').value.includes('48.0% used'), 'JSON preview did not update after scenario changed');
     check(!get('json-data').value.includes('2.11 load'), 'stale imported CPU data remains visible');
+    check(get('action-plan-list').querySelectorAll('.action-card').length === 1, 'healthy scenario action plan should only require backup verification');
     check(document.documentElement.scrollWidth <= window.innerWidth + 2,
       'mobile horizontal overflow: '+document.documentElement.scrollWidth+' vs '+window.innerWidth);
     document.body.setAttribute('data-opspulse-smoke','PASS');
