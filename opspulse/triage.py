@@ -8,6 +8,22 @@ from __future__ import annotations
 from typing import Any
 
 GUIDANCE: dict[str, tuple[str, str]] = {
+    "cpu_percent": (
+        "This is a short CPU sample, not sustained CPU load. Compare repeated observations with application performance and approved task/activity monitoring.",
+        "Identify workload changes and review authorised logs before stopping processes or changing services.",
+    ),
+    "ram_portable": (
+        "Review OS-available memory and recent application workload changes. OS memory accounting differs by platform.",
+        "Check for sustained memory pressure using the system's built-in performance tools before taking action.",
+    ),
+    "disk_portable": (
+        "Inspect filesystem usage and capacity trends with approved OS storage tools. Check retention policies before cleanup.",
+        "Disk-capacity metrics do not test drive wear, SMART status, backups or filesystem integrity.",
+    ),
+    "swap_portable": (
+        "Swap or page-file occupancy alone is not an error and does not prove current paging pressure.",
+        "Correlate with available RAM and sustained workload measurements before considering configuration changes.",
+    ),
     "cpu": (
         "Compare load average with logical CPUs and inspect process, I/O-wait and scheduler pressure. High load is not equivalent to CPU utilisation.",
         "Check workload changes and incident timing before restarting or stopping anything."
