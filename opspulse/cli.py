@@ -43,6 +43,15 @@ def main(argv: list[str] | None = None) -> int:
         report = demo_report() if args.demo else collect(
             disk_path=args.disk_path, dns_hostname=args.dns, tcp_hostname=args.tcp,
             tcp_port=args.port, service_names=tuple(args.service))
+        # Do not accidentally replace the interactive GitHub Pages dashboard.
+        # Generating a local HTML report inside docs/ would turn the public app
+        # back into a static page at the next git push.
+        interactive_file = args.out_dir / "index.html"
+        if interactive_file.exists() and 'id="seed-report"' in interactive_file.read_text(encoding="utf-8")[:35000]:
+            raise ValueError(
+                "This output folder contains the interactive OpsPulse dashboard. "
+                "Choose --out-dir reports or another private directory, not docs."
+            )
         args.out_dir.mkdir(parents=True, exist_ok=True)
         json_file = args.out_dir / "report.json"
         html_file = args.out_dir / "index.html"

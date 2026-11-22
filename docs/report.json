@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "tool": "OpsPulse — Linux IT Diagnostics Toolkit",
   "mode": "SIMULATED DEMO",
   "generated_utc": "2026-11-22T17:29:24+00:00",
@@ -77,5 +77,27 @@
     "critical": 0,
     "info": 1,
     "skip": 1
-  }
+  },
+  "action_plan": [
+    {
+      "check_key": "disk",
+      "label": "Root filesystem",
+      "priority": "warn",
+      "observed": "87.0% used",
+      "next_steps": [
+        "Run df -h on the affected filesystem and review growth, log retention and application storage policy.",
+        "Do not delete unknown files or logs without checking owners, backups and retention requirements."
+      ]
+    },
+    {
+      "check_key": "backup",
+      "label": "Backup restore verification",
+      "priority": "verification",
+      "observed": "Not tested",
+      "next_steps": [
+        "Perform a separate authorised restore test to isolated storage; verify restored data and record evidence.",
+        "A backup job's last success and RAID redundancy do not prove recoverability."
+      ]
+    }
+  ]
 }

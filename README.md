@@ -2,7 +2,7 @@
 
 **Read-only, privacy-conscious Linux diagnostics in Python.** A compact professional IT Support learning project that collects useful machine-health signals and generates a self-contained HTML dashboard and machine-readable JSON report.
 
-> **Project status:** Working v0.2 interactive MVP. Not an enterprise monitoring agent or a substitute for an incident investigation. GitHub Actions runs against its own temporary Linux runner—not your personal iPhone/Mac/office server. Demo reports are **fictional** and explicitly labelled.
+> **Project status:** Working v0.4 Linux troubleshooting and interactive-demo MVP. Not an enterprise monitoring agent or a substitute for an incident investigation. GitHub Actions runs against its own temporary Linux runner—not your personal iPhone/Mac/office server. Demo reports are **fictional** and explicitly labelled.
 
 ![Python stdlib](https://img.shields.io/badge/Python-3.11%2B-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-informational) ![Platform: Linux](https://img.shields.io/badge/Live%20diagnostics-Linux-only-green)
 
@@ -13,27 +13,36 @@
 | CPU pressure | 1-minute Linux load average per logical CPU | Yes, no network |
 | Memory | Available vs total memory using `/proc/meminfo` | Yes, no network |
 | Disk capacity | Usage/free space for the selected filesystem | Yes, no network |
+| Filesystem inodes | Available inode count via read-only `os.statvfs` | Yes, no network; skipped if unsupported |
+| Swap occupancy | Used/free swap from `/proc/meminfo`; informational, not proof of pressure | Yes, no network |
 | Uptime | Time since last boot from `/proc/uptime` | Yes, no network |
 | Network interfaces | Up/total non-loopback interfaces (no IPs/MACs) | Yes, no network |
 | DNS | Resolve a provided host, do not log returned IPs | Only with `--dns` |
 | TCP reachability | Attempt TCP connection to a user-specified host and port | Only with `--tcp` |
 | systemd services | Query services using `systemctl is-active` without shell | Only with `--service` |
 | Backup restore | Explicitly marked **not verified** | Always |
+| Prioritised action plan | Suggested safe next checks for critical, warning and unverified items | Automatic in HTML and JSON; does not repair anything |
 
 **No sudo/root necessary**. No pip packages, paid APIs, signup, agent installation, telemetry collection or background daemon. The generated HTML includes its CSS, works offline, contains no analytics, and has `noindex,nofollow` metadata to reduce accidental indexing.
 
 ## Quick start on Linux
 
-Requires Python 3.11+ on Linux:
+Requires Python 3.11+ on a Linux machine you own or administer. From a terminal with Git installed:
 
 ```bash
+git clone https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit.git
+cd Linux-IT-diagnostics-toolkit
 python3 -m opspulse --out-dir reports
 ```
+
+No root privileges, no Python pip dependencies, and no network probes by default. If the repository has already been cloned, run only the last command from its root.
 
 Creates:
 
 - `reports/index.html` — self-contained report, open it in a browser.
-- `reports/report.json` — structured data useful for ticket documentation.
+- `reports/report.json` — structured data with an ordered `action_plan` for ticket documentation.
+
+The HTML report lists **Critical → Attention → Not Verified** findings with suggested read-only investigation steps. A skipped backup check is not proof that a restore succeeded. The JSON contains only point-in-time results; it is not a live monitoring feed.
 
 Optional tests (explicitly opt in to external DNS/TCP and service state checks):
 
@@ -69,7 +78,7 @@ The collector can also generate a separate, fully offline fictional HTML/JSON ex
 python3 -m opspulse --demo --out-dir reports/demo
 ```
 
-Open `reports/demo/index.html` locally. Do **not** run the CLI demo with `--out-dir docs` in your source checkout, as that overwrites the interactive site's `docs/index.html`.
+Open `reports/demo/index.html` locally. The CLI now **refuses to overwrite the interactive `docs/index.html` dashboard** if you accidentally choose `--out-dir docs`.
 
 On iPhone, GitHub Actions can run unit tests using a temporary GitHub-hosted Linux runner; it **does not measure your iPhone or any office machine**. You do not need Python installed on the phone for the browser dashboard.
 
@@ -85,7 +94,8 @@ On iPhone, GitHub Actions can run unit tests using a temporary GitHub-hosted Lin
 python3 -m opspulse
     |
     +-- cli.py             Validate opt-in flags and output location
-    +-- collector.py       /proc, /sys, shutil; optional DNS/TCP/systemctl
+    +-- collector.py       /proc, /sys, statvfs; optional DNS/TCP/systemctl
+    +-- triage.py          Human-readable next checks ordered by priority
     +-- render.py          HTML escaping, self-contained CSS, safety labels
     +-- reports/index.html Openable offline in a browser
     +-- reports/report.json Structured ticket-friendly report
@@ -97,7 +107,9 @@ python3 -m opspulse
 - Collects no usernames, IP addresses, MAC addresses, environment variables, authentication secrets or raw process command lines.
 - The report contains explicitly requested DNS/TCP destination hostnames and service names. Do not use private customer names for public sample reports.
 - **Never publish an unreviewed live report**: even non-secret operational data may be confidential. CI uploads only the simulated demo as an artifact. It runs the live diagnostic on its **temporary GitHub runner** without publishing its report.
-- Memory threshold alerts are indicative. Linux load average is not CPU-use percentage; a disk-space report is not a SMART test.
+- Memory and inode thresholds are illustrative operating guidelines, not universal standards. Linux load average is not CPU-use percentage; a disk-space report is not a SMART test.
+- Swap allocation by itself is **informational**, not evidence of active swapping or low available memory. An inode shortage can prevent file creation even when disk bytes remain free.
+- Guidance is human triage, **never an automatic restart, deletion, scanning action or verified root cause**.
 - RAID is not backup; this tool does not assert that backup restoration succeeded.
 
 ## Test
@@ -115,6 +127,8 @@ CI in `.github/workflows/ci.yml` repeats Python and Node tests, validates the in
 - [x] Responsive offline HTML and JSON reports
 - [x] Unit tests, GitHub Actions example
 - [x] Interactive GitHub Pages simulated scenarios, report filtering and local JSON viewer
+- [x] Read-only filesystem inode and swap checks, triage action plans in real Linux HTML/JSON reports
+- [x] Guard against accidentally replacing the published dashboard with CLI report output
 - [ ] Optional alert threshold configuration and recurring health history
 - [ ] Windows PowerShell adapter, separate from the Linux collector
 - [ ] Dashboard UI for multiple **authorised** hosts and ticket history

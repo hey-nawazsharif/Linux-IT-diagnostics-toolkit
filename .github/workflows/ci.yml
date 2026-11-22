@@ -44,14 +44,37 @@ jobs:
           assert sample['mode'] == 'SIMULATED DEMO'
           assert 'id="run"' in website
           assert 'id="report-file"' in website
-          assert 'src="./app.js?v=20261122-3"' in website
+          assert 'src="./app.js?v=20261122-4"' in website
           assert 'id="quick-result"' in website
           assert 'id="download-link"' in website
+          assert 'id="action-plan-list"' in website
+          assert sample['schema_version'] == '1.1'
+          assert [a['priority'] for a in sample['action_plan']] == ['warn', 'verification']
           assert Path('docs/app.js').exists()
           print('PASS: standalone CLI report and interactive GitHub Pages demo are distinct and valid')
           PY
       - name: Read-only diagnostics of temporary GitHub Linux runner
         run: python -m opspulse --out-dir reports/live-runner
+      - name: Verify live Linux collector report contains new checks and action plan
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('reports/live-runner/report.json').read_text())
+          html=Path('reports/live-runner/index.html').read_text()
+          assert report['mode']=='LIVE LOCAL LINUX'
+          assert report['schema_version']=='1.1'
+          keys={c['key'] for c in report['checks']}
+          assert {'cpu','ram','swap','disk','inodes','uptime','interfaces','backup'} <= keys
+          assert report['summary']['skip'] >= 1
+          assert report['action_plan'][-1]['priority']=='verification'
+          assert 'Recommended troubleshooting next steps' in html
+          assert 'id="action-plan"' in html
+          assert 'Read-only' in html
+          assert '<script src=' not in html
+          print('PASS: real temporary Linux runner has inode/swap counters and actionable JSON/HTML triage')
+          PY
       - name: Upload fictional demo and interactive viewer only
         uses: actions/upload-artifact@v4
         with:

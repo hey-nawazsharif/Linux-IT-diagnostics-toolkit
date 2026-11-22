@@ -4,6 +4,8 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
+from .triage import action_plan
+
 STATUS_TEXT = {"pass": "Healthy", "warn": "Attention", "critical": "Critical", "info": "Information", "skip": "Not verified"}
 
 STYLE = """
@@ -18,7 +20,14 @@ h1{font-size:clamp(29px,5vw,50px);line-height:1.15;letter-spacing:-.025em;margin
 .stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:18px 0 35px;}.stat{border:1px solid var(--line);background:var(--panel);padding:18px;border-radius:13px;}.stat strong{display:block;font-size:34px;line-height:1.15}.stat span{font-size:12px;color:var(--muted);}.stat.critical strong{color:var(--crit)}.stat.warn strong{color:var(--warn)}.stat.pass strong{color:var(--accent)}
 .section-title{font-size:23px;margin:42px 0 10px;letter-spacing:-.02em;}.intro{color:var(--muted);margin-top:0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}.card{min-width:0;border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:21px 22px;}.card-top{display:flex;justify-content:space-between;align-items:start;gap:10px;}.card h3{font-size:16px;margin:0 0 12px;}.card .value{font-size:22px;line-height:1.35;font-weight:760;overflow-wrap:anywhere;}.card p{font-size:14px;color:var(--muted);line-height:1.65;margin:11px 0 0;overflow-wrap:anywhere;}.flag{white-space:nowrap;border-radius:6px;padding:4px 8px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}.flag.pass{color:#83ebd7;background:#174239}.flag.warn{color:#ffe1a9;background:#473520}.flag.critical{color:#ffc3c3;background:#4a282c}.flag.skip,.flag.info{color:#d4e4f7;background:#293f53}
 .callout{background:var(--panel2);border-left:3px solid var(--accent);padding:17px 19px;margin:22px 0;border-radius:5px;font-size:14px;color:#bfd7e4;}.callout strong{color:white}.note-list{padding-left:23px;color:#b3cbd8}.note-list li{padding:5px 0}footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;margin-top:48px;padding:22px 0 36px;}footer .container{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
-@media(max-width:820px){.stats{grid-template-columns:repeat(3,1fr)}}@media(max-width:630px){.hero{padding-top:38px}.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.card{padding:19px}.stat strong{font-size:29px}.stat{padding:14px}}
+.triage-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:16px 0 32px}
+.triage-item{border:1px solid var(--line);border-radius:12px;padding:20px 22px;background:var(--panel);break-inside:avoid}
+.triage-item.critical{border-left:4px solid var(--crit)}.triage-item.warn{border-left:4px solid var(--warn)}
+.triage-item.verification{border-left:4px solid var(--info)}
+.triage-item h3{font-size:16px;margin:0 0 10px}.triage-item .evidence{font-size:13px;color:var(--muted);margin:0}
+.triage-item ol{padding-left:21px;font-size:14px;color:#c7dae4;line-height:1.7;margin-bottom:0}
+.triage-item li{padding:4px 0}.triage-lead{font-size:14px;color:var(--muted)}
+@media(max-width:820px){.triage-list{grid-template-columns:1fr}}@media(max-width:820px){.stats{grid-template-columns:repeat(3,1fr)}}@media(max-width:630px){.hero{padding-top:38px}.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.card{padding:19px}.stat strong{font-size:29px}.stat{padding:14px}}
 @media print{body{background:white;color:#111}.card,.stat,.callout{background:#f7f9fa;color:#111;border-color:#d2d9df;break-inside:avoid}.card p,.lead,.intro,.stat span,.meta,.note-list,footer{color:#444}.eyebrow,.brand span{color:#165850}.flag{color:#111!important;background:#eef1f2!important}header{border-color:#ccc}}
 """
 
@@ -40,6 +49,26 @@ def render_html(report: dict[str, Any]) -> str:
             '<p>' + escape(str(item["detail"])) + '</p></article>'
         )
     cards = "\n".join(cells)
+    # The HTML is self-contained. Recommendations are read-only follow-ups,
+    # not automated remediation; all human-readable data are escaped.
+    followups = report.get("action_plan") or action_plan(report["checks"])
+    plan_cards = []
+    for item in followups:
+        priority = str(item.get("priority", "verification"))
+        if priority not in {"critical", "warn", "verification"}:
+            priority = "verification"
+        heading = {"critical": "Critical", "warn": "Attention", "verification": "Not verified"}[priority]
+        steps = "".join("<li>" + escape(str(step)) + "</li>" for step in item.get("next_steps", []))
+        plan_cards.append(
+            '<article class="triage-item ' + priority + '"><h3>' +
+            escape(heading) + " · " + escape(str(item.get("label", "Check"))) +
+            '</h3><p class="evidence">Observed: ' + escape(str(item.get("observed", "Unknown"))) +
+            '</p><ol>' + steps + '</ol></article>'
+        )
+    plan_html = "\n".join(plan_cards) if plan_cards else (
+        '<p class="callout">No warnings or critical checks were reported. '
+        'This does not establish that the machine or backups are fully healthy.</p>'
+    )
     stats = "".join(
         '<div class="stat ' + stat + '"><strong>' + str(int(summary.get(stat, 0))) + '</strong><span>' + title + '</span></div>'
         for stat, title in (("pass", "Healthy"), ("warn", "Attention"), ("critical", "Critical"), ("info", "Informational"), ("skip", "Not verified"))
@@ -60,6 +89,9 @@ def render_html(report: dict[str, Any]) -> str:
 <section aria-labelledby="checks"><h2 class="section-title" id="checks">Diagnostics</h2>
 <p class="intro">Warnings indicate possible attention areas, not proof of a root cause. Follow up with relevant logs and operational evidence.</p>
 <div class="grid">{cards}</div></section>
+<section aria-labelledby="action-plan"><h2 class="section-title" id="action-plan">Recommended troubleshooting next steps</h2>
+<p class="triage-lead">Ordered by critical, attention and not-verified checks. Suggestions are read-only investigative actions, not automated repairs or proof of root cause.</p>
+<div class="triage-list">{plan_html}</div></section>
 <section aria-labelledby="safety"><h2 class="section-title" id="safety">How to interpret this report</h2>
 <ul class="note-list"><li>Local Linux checks are read-only. DNS, TCP and systemd service checks run only when requested.</li>
 <li>Disk capacity is not a SMART drive-health test; service status does not establish end-to-end application health.</li>
