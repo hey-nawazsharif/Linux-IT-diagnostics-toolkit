@@ -1,10 +1,10 @@
-# OpsPulse — Linux IT Diagnostics Toolkit
+# OpsPulse — Local IT Diagnostics (Windows · macOS · Linux)
 
-**Read-only, privacy-conscious Linux diagnostics in Python.** A compact professional IT Support learning project that collects useful machine-health signals and generates a self-contained HTML dashboard and machine-readable JSON report.
+**Read-only, privacy-conscious desktop and CLI diagnostics in Python.** A practical IT Support project with a local one-click desktop UI, real point-in-time CPU/memory/disk/network-state checks, optional local HTML/JSON reports, and a separate simulated web demonstration.
 
-> **Project status:** Working v0.5 Linux troubleshooting and interactive-demo MVP. Not an enterprise monitoring agent or a substitute for an incident investigation. GitHub Actions runs against its own temporary Linux runner—not your personal iPhone/Mac/office server. Demo reports are **fictional** and explicitly labelled.
+> **Project status:** v0.6 cross-platform **unsigned developer beta**. Windows/macOS/Linux builds and real local host checks are tested on temporary GitHub Actions runners, not on your personal computer. Requires further user-device GUI tests, security review, signing/notarisation and OS-version coverage. The web demo is **fictional** and explicitly labelled; the downloaded desktop app performs real local checks only after user interaction.
 
-![Python stdlib](https://img.shields.io/badge/Python-3.11%2B-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-informational) ![Platform: Linux](https://img.shields.io/badge/Live%20diagnostics-Linux-only-green)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-informational) ![Platform: Windows macOS Linux](https://img.shields.io/badge/Desktop-Windows%20%7C%20macOS%20%7C%20Linux-green)
 
 ## Features
 
@@ -23,7 +23,37 @@
 | Backup restore | Explicitly marked **not verified** | Always |
 | Prioritised action plan | Suggested safe next checks for critical, warning and unverified items | Automatic in HTML and JSON; does not repair anything |
 
-**No sudo/root necessary**. No pip packages, paid APIs, signup, agent installation, telemetry collection or background daemon. The generated HTML includes its CSS, works offline, contains no analytics, and has `noindex,nofollow` metadata to reduce accidental indexing.
+**No root/admin necessary.** No paid APIs, signup, telemetry collection or background daemon. The Linux CLI uses Python standard library only; Windows/macOS CLI and source desktop UI use the open-source `psutil` dependency. Packaged desktop builds bundle their runtime. The generated HTML works offline with no external scripts or analytics.
+
+## Desktop beta — Windows, macOS and Linux
+
+**Public prerelease downloads (only after all four build jobs pass):**
+[GitHub Releases](https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/releases)
+
+Read [DESKTOP_BETA.md](DESKTOP_BETA.md) for platform-specific Windows x64, Mac Apple Silicon (including M2), Mac Intel and Linux x64 packages, SHA-256 verification, installation cautions, and the difference between actual desktop scans and the browser demo.
+
+The desktop app lets the user explicitly click **Run health check**, inspect local CPU/RAM/disk/swap/uptime/network-state values, and optionally choose **Save HTML + JSON**. It does not scan remote systems, auto-upload data, repair problems or execute network probes by default. Windows/macOS Linux-specific service/inode checks are transparently marked not applicable. These are **unsigned developer-preview builds**: OS warnings and compatibility issues are possible.
+
+Run from source on your own computer using Python 3.11+:
+
+```bash
+git clone https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit.git
+cd Linux-IT-diagnostics-toolkit
+python -m pip install -r requirements-desktop.txt
+python -m opspulse.desktop
+```
+
+If `python` is unavailable on your Linux/macOS terminal, try `python3`. Tk may require installing the operating system's Python Tk GUI support. Optional CLI on all three supported OSes: `python -m opspulse --out-dir reports`.
+
+## What each platform measures
+
+| OS | CPU | Memory | Disk | Network | Inodes & services |
+| --- | --- | --- | --- | --- | --- |
+| Windows | Short CPU utilisation sample | OS available RAM | System-drive capacity, pagefile (info) | Local interface up/down summary | Linux-only checks are skipped |
+| macOS | Short CPU utilisation sample | OS available RAM | System-filesystem capacity, swap (info) | Local interface up/down summary | Linux-only checks are skipped |
+| Linux | Load average / logical CPU | /proc/meminfo | Filesystem capacity + inode availability, swap (info) | Local interface operational state | Optional systemd checks |
+
+Values are local snapshots, not a medical-style “health score”, vulnerability audit, remote scan or forecast. Windows/macOS CPU percent is not directly comparable to Linux load average. Optional CLI `--dns` and `--tcp` network probes require a user-supplied approved destination; none run by default.
 
 ## Quick start on Linux
 
@@ -58,7 +88,7 @@ python3 -m opspulse --dns example.com --tcp example.com --port 443 --service ssh
 
 The GitHub Pages app (`docs/index.html` + `docs/app.js`) now provides:
 
-The browser UI uses a compact, light IT operations-console layout (sidebar navigation, compact status strip, table-like diagnostic checks and investigation plans). It is deliberately a technical tool rather than a promotional landing page.
+The browser UI uses a compact, light IT operations-console layout. **It is a simulated demonstration and local JSON viewer, not a remote diagnostic website.** Desktop beta downloads are linked from the console and releases page.
 
 - **Run simulated diagnostics** using four fictional scenarios (baseline, healthy, warnings, critical).
 - Filter by health status, search checks and open relevant troubleshooting guidance.
@@ -108,7 +138,7 @@ python3 -m opspulse
 - Read-only system observations. Does not run a vulnerability scan, alter files, kill processes or change service settings.
 - Collects no usernames, IP addresses, MAC addresses, environment variables, authentication secrets or raw process command lines.
 - The report contains explicitly requested DNS/TCP destination hostnames and service names. Do not use private customer names for public sample reports.
-- **Never publish an unreviewed live report**: even non-secret operational data may be confidential. CI uploads only the simulated demo as an artifact. It runs the live diagnostic on its **temporary GitHub runner** without publishing its report.
+- **Never publish an unreviewed live report:** operational data may be confidential. CI builds and smoke-tests the desktop app on disposable runners but does not publish their real host reports. Only demo data is displayed publicly on GitHub Pages.
 - Memory and inode thresholds are illustrative operating guidelines, not universal standards. Linux load average is not CPU-use percentage; a disk-space report is not a SMART test.
 - Swap allocation by itself is **informational**, not evidence of active swapping or low available memory. An inode shortage can prevent file creation even when disk bytes remain free.
 - Guidance is human triage, **never an automatic restart, deletion, scanning action or verified root cause**.
@@ -121,7 +151,7 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q opspulse tests
 ```
 
-CI in `.github/workflows/ci.yml` repeats Python and Node tests, validates the interactive browser dashboard, and produces a separate offline demo report (no account secrets required).
+CI in `.github/workflows/ci.yml` runs Python and Node browser tests. `.github/workflows/desktop-beta.yml` builds Windows, macOS Apple Silicon, macOS Intel and Linux developer previews, executes packaged collector smoke tests and publishes unsigned public prereleases if all jobs pass. Reports gathered on GitHub-hosted runners are never uploaded as artifacts.
 
 ## Roadmap
 
@@ -132,7 +162,8 @@ CI in `.github/workflows/ci.yml` repeats Python and Node tests, validates the in
 - [x] Read-only filesystem inode and swap checks, triage action plans in real Linux HTML/JSON reports
 - [x] Guard against accidentally replacing the published dashboard with CLI report output
 - [ ] Optional alert threshold configuration and recurring health history
-- [ ] Windows PowerShell adapter, separate from the Linux collector
+- [x] Windows/macOS `psutil`-based local collector, desktop GUI and four-OS build workflow
+- [ ] Real-user physical-device testing, code signing/notarisation and OS-compatibility hardening
 - [ ] Dashboard UI for multiple **authorised** hosts and ticket history
 - [ ] Production hardening, benchmarks, and broader distro validation
 
