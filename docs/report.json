@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "tool": "OpsPulse — Linux IT Diagnostics Toolkit",
+  "mode": "SIMULATED DEMO",
+  "generated_utc": "2026-11-22T17:29:24+00:00",
+  "privacy": "No passwords, environment variables, IP addresses, MAC addresses or username/hostname inventory are collected.",
+  "network_probes": "SIMULATED — no real network connections were made.",
+  "checks": [
+    {
+      "key": "cpu",
+      "label": "CPU load pressure",
+      "status": "pass",
+      "value": "0.42 load / 8 logical CPUs",
+      "detail": "Example 1-minute load. No real computer was inspected.",
+      "category": "system"
+    },
+    {
+      "key": "ram",
+      "label": "Memory availability",
+      "status": "pass",
+      "value": "44.0% in use",
+      "detail": "Simulated 16.0 GiB total RAM; values are illustrations.",
+      "category": "system"
+    },
+    {
+      "key": "disk",
+      "label": "Root filesystem",
+      "status": "warn",
+      "value": "87.0% used",
+      "detail": "Simulated disk space warning. An operator could review old logs or adjust capacity.",
+      "category": "storage"
+    },
+    {
+      "key": "uptime",
+      "label": "System uptime",
+      "status": "info",
+      "value": "5 days, 9 hours",
+      "detail": "Illustrative uptime.",
+      "category": "system"
+    },
+    {
+      "key": "interfaces",
+      "label": "Network interfaces",
+      "status": "pass",
+      "value": "1 up / 2 non-loopback",
+      "detail": "Interface names, IPs and MACs are intentionally hidden.",
+      "category": "network"
+    },
+    {
+      "key": "dns",
+      "label": "DNS resolution",
+      "status": "pass",
+      "value": "Resolved",
+      "detail": "Simulated external check to example.com, not executed.",
+      "category": "network"
+    },
+    {
+      "key": "service",
+      "label": "Service ssh",
+      "status": "pass",
+      "value": "Active",
+      "detail": "Simulated service status, not tested on a live server.",
+      "category": "service"
+    },
+    {
+      "key": "backup",
+      "label": "Backup restore verification",
+      "status": "skip",
+      "value": "Not tested",
+      "detail": "A live restore needs separate manual evidence; this tool does not claim to validate backups.",
+      "category": "service"
+    }
+  ],
+  "summary": {
+    "pass": 5,
+    "warn": 1,
+    "critical": 0,
+    "info": 1,
+    "skip": 1
+  }
+}

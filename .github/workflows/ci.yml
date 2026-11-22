@@ -1,0 +1,44 @@
+name: Linux diagnostics CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax check
+        run: python -m compileall -q opspulse tests
+      - name: Unit tests (no external services)
+        run: python -m unittest discover -s tests -v
+      - name: Generate clearly marked fictional demo report
+        run: python -m opspulse --demo --out-dir docs
+      - name: Validate demo metadata and privacy policy
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('docs/report.json').read_text())
+          assert r['mode'] == 'SIMULATED DEMO'
+          assert r['summary']['warn'] >= 1
+          assert '<style>' in Path('docs/index.html').read_text()
+          assert 'IP addresses' in r['privacy']
+          print('PASS: demo report generated and correctly labelled')
+          PY
+      - name: Read-only diagnostics of temporary GitHub Linux runner
+        run: python -m opspulse --out-dir reports
+      - name: Upload demonstration report only
+        uses: actions/upload-artifact@v4
+        with:
+          name: clearly-labelled-fictional-demo
+          path: |
+            docs/index.html
+            docs/report.json
+          if-no-files-found: error
