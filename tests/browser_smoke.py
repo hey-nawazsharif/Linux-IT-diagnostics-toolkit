@@ -24,6 +24,7 @@ window.addEventListener('load', async function () {
     get('run').click();
     check(document.querySelector('#stats .stat.critical strong').textContent === '2', 'critical scenario count');
     check(get('diagnostic-grid').textContent.includes('98.0% in use'), 'critical RAM value not rendered');
+    check(get('quick-result').textContent.includes('2 critical'), 'visible critical summary did not update');
 
     document.querySelector('[data-filter="critical"]').click();
     check(document.querySelectorAll('#diagnostic-grid article').length === 2, 'status filter not working');
@@ -33,6 +34,12 @@ window.addEventListener('load', async function () {
     get('search').dispatchEvent(new Event('input',{bubbles:true}));
     check(document.querySelectorAll('#diagnostic-grid article').length === 1, 'search not working');
     check(get('diagnostic-grid').textContent.includes('Not verified'), 'backup never verified');
+
+    get('view-json').click();
+    check(get('json-viewer').hidden === false, 'manual JSON viewer did not open');
+    check(get('json-data').value.includes('"SIMULATED DEMO"'), 'JSON copy fallback missing simulated label');
+    get('view-json').click();
+    check(get('json-viewer').hidden === true, 'manual JSON viewer did not close');
 
     get('reset').click();
     check(document.querySelectorAll('#diagnostic-grid article').length === 8, 'reset cards');
@@ -52,7 +59,13 @@ window.addEventListener('load', async function () {
     check(get('diagnostic-grid').textContent.includes('2.11 load'), 'import not rendered');
 
     get('export').click();
-    check(get('feedback').textContent.includes('download'), 'download action missing');
+    check(get('download-link').hidden === false, 'iPhone manual download link not visible');
+    check(get('json-viewer').hidden === false, 'JSON copy fallback not visible');
+    check(get('json-data').value.includes('2.11 load'), 'JSON preview not reflecting imported file');
+    check(get('download-link').download.includes('unverified'), 'Imported download needs unverified label');
+    check(get('feedback').textContent.includes('download'), 'download feedback missing');
+    check(document.documentElement.scrollWidth <= window.innerWidth + 2,
+      'mobile horizontal overflow: '+document.documentElement.scrollWidth+' vs '+window.innerWidth);
     document.body.setAttribute('data-opspulse-smoke','PASS');
   } catch (e) {
     document.body.setAttribute('data-opspulse-smoke','FAIL');
@@ -75,6 +88,7 @@ def main() -> None:
             [chrome, "--headless=new", "--no-sandbox", "--disable-gpu",
              "--disable-dev-shm-usage", "--no-first-run", "--no-default-browser-check",
              "--allow-file-access-from-files", "--virtual-time-budget=7000",
+             "--window-size=390,844","--force-device-scale-factor=2",
              "--dump-dom", SCRATCH.as_uri()],
             capture_output=True, text=True, timeout=35, check=False,
         )
