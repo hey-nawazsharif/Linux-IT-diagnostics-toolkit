@@ -12,6 +12,8 @@ import subprocess
 import sys
 from typing import Any
 
+from .triage import action_plan
+
 MAX_SERVICES = 10
 SERVICE_PATTERN = re.compile(r"^[a-zA-Z0-9@_.-]{1,100}$")
 
@@ -75,6 +77,49 @@ def disk_check(path: Path, *, label: str | None = None) -> dict[str, str]:
         return check("disk", safe_label, status, f"{pct:.1f}% used", f"{usage.free/(1024**3):.1f} GiB free / {usage.total/(1024**3):.1f} GiB total. This checks the filesystem, not SSD wear or SMART health.", category="storage")
     except (OSError, ValueError):
         return check("disk", safe_label, "skip", "Unavailable", "Cannot read disk capacity for the selected path.", category="storage")
+
+
+def inode_check(path: Path, *, stat=os.statvfs) -> dict[str, str]:
+    """Read available filesystem inode counts without listing user files."""
+    try:
+        fs = stat(path)
+        total = int(fs.f_files)
+        available = int(fs.f_favail)
+        if total <= 0:
+            return check("inodes", "Filesystem inode availability", "skip", "Not reported",
+                         "This filesystem does not expose an inode total. This is not evidence of a fault.",
+                         category="storage")
+        if not 0 <= available <= total:
+            raise ValueError("Invalid inode counters")
+        used_pct = 100 * (total - available) / total
+        status = "critical" if used_pct >= 95 else "warn" if used_pct >= 85 else "pass"
+        return check("inodes", "Filesystem inode availability", status, f"{used_pct:.1f}% used",
+                     f"{available:,} inodes available of {total:,}. Read-only filesystem counters; "
+                     "inode availability differs from free disk bytes and does not measure SSD wear.",
+                     category="storage")
+    except (OSError, ValueError, TypeError, AttributeError):
+        return check("inodes", "Filesystem inode availability", "skip", "Unavailable",
+                     "Unable to read inode counters for the selected filesystem.",
+                     category="storage")
+
+
+def swap_check(path: Path = Path("/proc/meminfo")) -> dict[str, str]:
+    """Show swap occupancy as context, not automatic proof of memory pressure."""
+    try:
+        data = read_meminfo(path)
+        total, free = data["SwapTotal"], data["SwapFree"]
+        if total < 0 or not 0 <= free <= total:
+            raise ValueError("Invalid swap counters")
+        if total == 0:
+            return check("swap", "Swap occupancy", "info", "Not configured",
+                         "No swap space reported. That is not automatically a fault; assess the workload and memory policy.")
+        pct = 100 * (total - free) / total
+        return check("swap", "Swap occupancy", "info", f"{pct:.1f}% allocated",
+                     f"{(total - free)/(1024**2):.1f} GiB allocated of {total/(1024**2):.1f} GiB. "
+                     "Swap allocation alone does not prove active swapping or memory pressure.")
+    except (OSError, ValueError, KeyError):
+        return check("swap", "Swap occupancy", "skip", "Unavailable",
+                     "Swap counters could not be read from Linux meminfo.")
 
 
 def uptime_check(path: Path = Path("/proc/uptime")) -> dict[str, str]:
@@ -156,7 +201,7 @@ def demo_report() -> dict[str, Any]:
 def build_report(entries: list[dict[str, str]], *, demo: bool = False) -> dict[str, Any]:
     counts = {status: sum(c["status"] == status for c in entries) for status in ("pass", "warn", "critical", "info", "skip")}
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "tool": "OpsPulse — Linux IT Diagnostics Toolkit",
         "mode": "SIMULATED DEMO" if demo else "LIVE LOCAL LINUX",
         "generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
@@ -164,6 +209,7 @@ def build_report(entries: list[dict[str, str]], *, demo: bool = False) -> dict[s
         "network_probes": "Opt-in only. Local mode has no external probes by default." if not demo else "SIMULATED — no real network connections were made.",
         "checks": entries,
         "summary": counts,
+        "action_plan": action_plan(entries),
     }
 
 
@@ -177,7 +223,15 @@ def collect(*, disk_path: Path = Path("/"), dns_hostname: str | None = None,
     for service in service_names:
         if not SERVICE_PATTERN.fullmatch(service):
             raise ValueError("Invalid service name: use letters, digits, @ . _ - only")
-    entries = [cpu_check(), memory_check(), disk_check(disk_path, label="Selected filesystem"), uptime_check(), interface_check()]
+    entries = [
+        cpu_check(),
+        memory_check(),
+        swap_check(),
+        disk_check(disk_path, label="Selected filesystem"),
+        inode_check(disk_path),
+        uptime_check(),
+        interface_check(),
+    ]
     if dns_hostname:
         entries.append(dns_check(dns_hostname))
     if tcp_hostname:
