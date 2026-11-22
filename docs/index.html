@@ -163,6 +163,16 @@ select{max-width:100%}
   .card,.action-card,.stat{break-inside:avoid}.card>p,.action-card p{color:#444}
   .panel-head{padding:10px 12px}.page-head h1{font-size:22px}.stats{grid-template-columns:repeat(5,1fr)}.stat{border-bottom:0}
 }
+.downloads-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.downloads-grid .platform{min-width:0;padding:17px 19px;border-right:1px solid var(--line)}
+.downloads-grid .platform:last-child{border-right:0}
+.downloads-grid h3{margin:0 0 6px;font-size:13px;font-weight:730}
+.downloads-grid p{margin:0;color:var(--muted);font-size:12px}
+.download-actions{display:flex;flex-wrap:wrap;align-items:center;gap:13px;border-top:1px solid var(--line);padding:16px 19px}
+.download-actions p{font-size:12px;color:var(--muted);margin:0;max-width:650px}
+@media(max-width:660px){.downloads-grid{grid-template-columns:1fr}
+.downloads-grid .platform{border-right:0;border-bottom:1px solid var(--line);padding:14px 15px}
+.download-actions{padding:15px}}
 </style>
 <script id="seed-report" type="application/json">{"schema_version":"1.1","tool":"OpsPulse — Linux IT Diagnostics Toolkit","mode":"SIMULATED DEMO","generated_utc":"2026-11-22T17:29:24+00:00","privacy":"No passwords, environment variables, IP addresses, MAC addresses or username/hostname inventory are collected.","network_probes":"SIMULATED — no real network connections were made.","checks":[{"key":"cpu","label":"CPU load pressure","status":"pass","value":"0.42 load / 8 logical CPUs","detail":"Example 1-minute load. No real computer was inspected.","category":"system"},{"key":"ram","label":"Memory availability","status":"pass","value":"44.0% in use","detail":"Simulated 16.0 GiB total RAM; values are illustrations.","category":"system"},{"key":"disk","label":"Root filesystem","status":"warn","value":"87.0% used","detail":"Simulated disk space warning. An operator could review old logs or adjust capacity.","category":"storage"},{"key":"uptime","label":"System uptime","status":"info","value":"5 days, 9 hours","detail":"Illustrative uptime.","category":"system"},{"key":"interfaces","label":"Network interfaces","status":"pass","value":"1 up / 2 non-loopback","detail":"Interface names, IPs and MACs are intentionally hidden.","category":"network"},{"key":"dns","label":"DNS resolution","status":"pass","value":"Resolved","detail":"Simulated external check to example.com, not executed.","category":"network"},{"key":"service","label":"Service ssh","status":"pass","value":"Active","detail":"Simulated service status, not tested on a live server.","category":"service"},{"key":"backup","label":"Backup restore verification","status":"skip","value":"Not tested","detail":"A live restore needs separate manual evidence; this tool does not claim to validate backups.","category":"service"}],"summary":{"pass":5,"warn":1,"critical":0,"info":1,"skip":1},"action_plan":[{"check_key":"disk","label":"Root filesystem","priority":"warn","observed":"87.0% used","next_steps":["Run df -h on the affected filesystem and review growth, log retention and application storage policy.","Do not delete unknown files or logs without checking owners, backups and retention requirements."]},{"check_key":"backup","label":"Backup restore verification","priority":"verification","observed":"Not tested","next_steps":["Perform a separate authorised restore test to isolated storage; verify restored data and record evidence.","A backup job's last success and RAID redundancy do not prove recoverability."]}]}</script>
 <script src="./app.js?v=20261123-1" defer></script>
@@ -172,7 +182,7 @@ select{max-width:100%}
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand-wrap"><span class="logo" aria-hidden="true">OP</span><div><div class="brand">OpsPulse</div><div class="brand-caption">Linux diagnostics toolkit</div></div></div>
-    <div class="toplinks"><a href="https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit" target="_blank" rel="noopener noreferrer">Source code</a><a href="https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/actions" target="_blank" rel="noopener noreferrer">Build status</a><span class="top-version">v0.5</span></div>
+    <div class="toplinks"><a href="https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit" target="_blank" rel="noopener noreferrer">Source code</a><a href="https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/actions" target="_blank" rel="noopener noreferrer">Build status</a><span class="top-version">v0.6 beta</span></div>
   </div>
 </header>
 <div class="app">
@@ -184,6 +194,7 @@ select{max-width:100%}
       <a href="#findings">Diagnostic checks</a>
       <a href="#next-steps">Next steps</a>
       <a href="#report-tools">Reports</a>
+      <a href="#desktop-downloads">Desktop app</a>
       <a href="#run-guide">Run on Linux</a>
     </nav>
     <div class="rail-meta"><strong>Local-first by design</strong>No account or telemetry. Sample data stays in your browser.<p><a href="https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit#quick-start-on-linux" target="_blank" rel="noopener noreferrer">Installation guide</a></p></div>
@@ -269,6 +280,20 @@ select{max-width:100%}
             <label for="json-data">Report JSON — select and copy</label>
             <textarea id="json-data" readonly spellcheck="false" aria-label="Report JSON for copying"></textarea>
           </div>
+        </div>
+      </section>
+
+      <section class="panel" id="desktop-downloads" aria-labelledby="desktop-title">
+        <div class="panel-head"><h2 id="desktop-title">Desktop app — local health check</h2><p>Unsigned developer beta</p></div>
+        <div class="downloads-grid">
+          <div class="platform"><h3>macOS</h3><p>Apple Silicon (M1/M2/M3/M4) and Intel. Download the matching .app archive.</p></div>
+          <div class="platform"><h3>Windows</h3><p>Windows x64 (Intel/AMD). Local diagnostic executable; no installation agent.</p></div>
+          <div class="platform"><h3>Linux</h3><p>Linux x64. Local executable or the Python collector already available in this repository.</p></div>
+        </div>
+        <div class="download-actions">
+          <a class="button primary" href="https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/releases" target="_blank" rel="noopener noreferrer">See verified beta downloads</a>
+          <a href="https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/blob/main/DESKTOP_BETA.md" target="_blank" rel="noopener noreferrer">Installation &amp; safety guide</a>
+          <p>Download packages are published only after four OS build tests pass. Unsigned apps may trigger OS security warnings; do not bypass workplace protections. This website remains a simulated demo, not a remote system scanner.</p>
         </div>
       </section>
 

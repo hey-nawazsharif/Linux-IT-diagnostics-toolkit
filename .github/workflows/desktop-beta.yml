@@ -1,0 +1,148 @@
+name: Cross-platform desktop beta — build and smoke test
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'opspulse/**'
+      - 'opspulse_desktop.py'
+      - 'requirements-desktop.txt'
+      - 'requirements-build.txt'
+      - 'tests/**'
+      - '.github/workflows/desktop-beta.yml'
+  pull_request:
+    paths:
+      - 'opspulse/**'
+      - 'opspulse_desktop.py'
+      - 'requirements-desktop.txt'
+      - 'requirements-build.txt'
+      - 'tests/**'
+      - '.github/workflows/desktop-beta.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable-desktop:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            platform: windows-x64
+          - runner: macos-15
+            platform: macos-apple-silicon
+          - runner: macos-15-intel
+            platform: macos-intel
+          - runner: ubuntu-latest
+            platform: linux-x64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python desktop dependencies and build tools
+        run: python -m pip install -r requirements-build.txt
+      - name: Install Linux Tk support
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y python3-tk
+      - name: Python compile and portable diagnostics regression tests
+        run: |
+          python -m compileall -q opspulse tests opspulse_desktop.py
+          python -m unittest discover -s tests -v
+      - name: Execute actual read-only local host diagnostics (never publish runner report)
+        run: |
+          python -c "from opspulse.cli import main; from pathlib import Path; code=main(['--out-dir','reports/runner-local']); assert code in (0,1), code"
+          python -c "import json; from pathlib import Path; r=json.loads(Path('reports/runner-local/report.json').read_text()); assert r['mode'].startswith('LIVE LOCAL'); assert r['summary']['skip'] >= 1; assert len(r['checks']) >= 8; assert 'action_plan' in r; print('PASS: real local host diagnostics and JSON generated')"
+      - name: Build Windows executable (unsigned)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --clean --windowed --onefile --name OpsPulse opspulse_desktop.py
+          if (!(Test-Path "dist/OpsPulse.exe")) { throw "Windows executable missing" }
+          & "./dist/OpsPulse.exe" --self-test
+          if ($LASTEXITCODE -ne 0) { throw "Windows packaged collector self-test failed" }
+          Compress-Archive -Path "dist/OpsPulse.exe" -DestinationPath "OpsPulse-windows-x64-unsigned.zip"
+          $hash=(Get-FileHash "OpsPulse-windows-x64-unsigned.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash  OpsPulse-windows-x64-unsigned.zip" | Set-Content "OpsPulse-windows-x64-unsigned.zip.sha256"
+      - name: Build macOS .app (unsigned)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          pyinstaller --noconfirm --clean --windowed --onedir --name OpsPulse opspulse_desktop.py
+          test -d dist/OpsPulse.app
+          ./dist/OpsPulse.app/Contents/MacOS/OpsPulse --self-test
+          ditto -c -k --sequesterRsrc --keepParent dist/OpsPulse.app "OpsPulse-${{ matrix.platform }}-unsigned.zip"
+          shasum -a 256 "OpsPulse-${{ matrix.platform }}-unsigned.zip" > "OpsPulse-${{ matrix.platform }}-unsigned.zip.sha256"
+      - name: Build Linux executable (unsigned)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          pyinstaller --noconfirm --clean --windowed --onefile --name OpsPulse opspulse_desktop.py
+          test -x dist/OpsPulse
+          ./dist/OpsPulse --self-test
+          tar -czf OpsPulse-linux-x64-unsigned.tar.gz -C dist OpsPulse
+          sha256sum OpsPulse-linux-x64-unsigned.tar.gz > OpsPulse-linux-x64-unsigned.tar.gz.sha256
+      - name: Upload unsigned pre-release build and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpsPulse-${{ matrix.platform }}-beta
+          path: |
+            OpsPulse-*-unsigned.zip
+            OpsPulse-*-unsigned.zip.sha256
+            OpsPulse-*-unsigned.tar.gz
+            OpsPulse-*-unsigned.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-beta:
+    name: Publish public unsigned beta download
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: portable-desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: OpsPulse-*-beta
+          path: packages
+          merge-multiple: true
+      - name: Verify four bundles and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find packages -maxdepth 1 -type f \( -name '*.zip' -o -name '*.tar.gz' \) | wc -l)" -eq 4
+          cd packages
+          sha256sum --check OpsPulse-windows-x64-unsigned.zip.sha256
+          sha256sum --check OpsPulse-macos-apple-silicon-unsigned.zip.sha256
+          sha256sum --check OpsPulse-macos-intel-unsigned.zip.sha256
+          sha256sum --check OpsPulse-linux-x64-unsigned.tar.gz.sha256
+      - name: Create GitHub pre-release with verified unsigned downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="v0.6.0-beta.${{ github.run_number }}"
+          cat > release-notes.txt <<'NOTES'
+          Developer preview, NOT a signed/notarised production release. The native
+          desktop application runs read-only, point-in-time diagnostics on the
+          computer where it is opened. No account or external network checks by
+          default. Files remain on that computer unless the user saves/shares them.
+          Choose Windows x64, macOS Apple Silicon, macOS Intel or Linux x64.
+          On macOS/Windows, Gatekeeper/SmartScreen may warn for unsigned apps;
+          never bypass security controls on a work-managed device. Source is public
+          and Python CLI available. Personal-device GUI testing is still required.
+          NOTES
+          gh release create "$VERSION" packages/*.zip packages/*.tar.gz packages/*.sha256 \
+            --prerelease --target "${{ github.sha }}" \
+            --title "OpsPulse cross-platform desktop beta (unsigned)" \
+            --notes-file release-notes.txt

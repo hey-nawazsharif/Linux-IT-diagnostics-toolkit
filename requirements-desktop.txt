@@ -1,0 +1,3 @@
+# Cross-platform local system counters for Windows/macOS (also supports Linux).
+# Installed inside unsigned desktop build; no hosted API, account, or API key.
+psutil>=6.1,<9
