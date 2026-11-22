@@ -14,31 +14,50 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Syntax check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Python syntax check
         run: python -m compileall -q opspulse tests
-      - name: Unit tests (no external services)
+      - name: Linux diagnostics Python unit tests
         run: python -m unittest discover -s tests -v
-      - name: Generate clearly marked fictional demo report
-        run: python -m opspulse --demo --out-dir docs
-      - name: Validate demo metadata and privacy policy
+      - name: Check browser JavaScript syntax
+        run: node --check docs/app.js
+      - name: Test scenarios, report parsing and interactive UI contract
+        run: node --test tests/dashboard.test.cjs
+      - name: Exercise real browser UI (Chromium)
+        run: python tests/browser_smoke.py
+      - name: Generate clearly marked fictional offline CLI report
+        run: python -m opspulse --demo --out-dir reports/demo
+      - name: Validate generated demo metadata and hosted interactive demo
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          r = json.loads(Path('docs/report.json').read_text())
-          assert r['mode'] == 'SIMULATED DEMO'
-          assert r['summary']['warn'] >= 1
-          assert '<style>' in Path('docs/index.html').read_text()
-          assert 'IP addresses' in r['privacy']
-          print('PASS: demo report generated and correctly labelled')
+          offline = json.loads(Path('reports/demo/report.json').read_text())
+          assert offline['mode'] == 'SIMULATED DEMO'
+          assert offline['summary']['warn'] >= 1
+          assert '<style>' in Path('reports/demo/index.html').read_text()
+          assert 'IP addresses' in offline['privacy']
+          website = Path('docs/index.html').read_text()
+          sample = json.loads(Path('docs/report.json').read_text())
+          assert sample['mode'] == 'SIMULATED DEMO'
+          assert 'id="run"' in website
+          assert 'id="report-file"' in website
+          assert 'src="./app.js"' in website
+          assert Path('docs/app.js').exists()
+          print('PASS: standalone CLI report and interactive GitHub Pages demo are distinct and valid')
           PY
       - name: Read-only diagnostics of temporary GitHub Linux runner
-        run: python -m opspulse --out-dir reports
-      - name: Upload demonstration report only
+        run: python -m opspulse --out-dir reports/live-runner
+      - name: Upload fictional demo and interactive viewer only
         uses: actions/upload-artifact@v4
         with:
           name: clearly-labelled-fictional-demo
           path: |
             docs/index.html
+            docs/app.js
             docs/report.json
+            reports/demo/index.html
+            reports/demo/report.json
           if-no-files-found: error

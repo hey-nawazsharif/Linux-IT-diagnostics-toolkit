@@ -1,28 +1,45 @@
-# OpsPulse — iPhone se GitHub project kaise check karein
+# OpsPulse — iPhone par interactive dashboard kaise use karein
 
-**Status: Source code successfully published, GitHub Actions CI passed (13 unit tests).** Is repository mein Python diagnostics tool, self-contained HTML dashboard, simulated demo report, tests aur MIT license available hain.
+**Project published:** https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit
 
-## Project ke source aur automated tests
+**Live GitHub Pages demo:** https://hey-nawazsharif.github.io/Linux-IT-diagnostics-toolkit/
 
-- Repository: https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit
-- GitHub Actions: https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/actions
-- Public sample HTML source: https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/blob/main/docs/index.html
-- README: https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/blob/main/README.md
+## iPhone par kya kaam karega?
 
-## Optional: iPhone se public demo webpage enable karein
+1. Demo link Safari mein kholo.
+2. **Diagnostic scenario** mein Healthy / Disk warnings / Critical load select karo.
+3. **Run simulated diagnostics** dabao; CPU, memory, disk, service status aur alerts us fictional scenario ke hisaab se badlenge.
+4. **Healthy / Attention / Critical** filters ya **Search** ka use karke specific diagnostics dekho.
+5. Har card ke neeche **What should an IT engineer check?** se troubleshooting guidance dekho.
+6. **Download JSON** se current scenario ka local sample file save kar sakte ho.
+7. **Reset demo** se original fictional values wapas aa jayengi.
 
-1. Safari mein repository kholo; GitHub ke desktop-mode site ki zarurat pad sakti hai.
-2. **Settings** > **Pages** kholo.
-3. **Build and deployment** > **Source: Deploy from a branch** select karo.
-4. Branch **main** aur folder **/docs** select karo; **Save** dabao.
-5. GitHub Pages deploy hone ke baad expected preview URL:
-   https://hey-nawazsharif.github.io/Linux-IT-diagnostics-toolkit/
-6. Demo page par **SIMULATED DEMO** likha hua verify karo. Ye real machine report nahi hai.
+**Zaruri:** Ye browser demo hai. Ye iPhone, Mac ya kisi remote Linux machine ko scan nahi karta; sab initial values SIMULATED hain.
 
-## Practical boundaries
+## Real Linux JSON report ko dekhna
 
-- Reports generated in GitHub Actions reflect the temporary Linux runner, not your iPhone, MacBook or private office network.
-- Demo data are fictional and explicitly labelled.
-- A Linux machine is needed for real local diagnostics; app code is read-only by default.
-- **Do not publish live diagnostic reports from business machines without permission and review.**
-- GitHub repository aur CI kaam kar rahe hain; GitHub Pages optional hai, enabling requires repository settings access.
+Agar kisi authorised Linux machine par Python 3.11+ installed hai aur is repo ka code hai:
+
+```bash
+python3 -m opspulse --out-dir reports
+```
+
+Us Linux machine ki `reports/report.json` file ko iPhone mein locally transfer karo (only after checking security/privacy approval), phir dashboard par **Open a local JSON report** choose karo. Browser data ko kisi server par upload nahi karta; local file ka source aur accuracy verify karna tumhari zimmedari hai.
+
+## GitHub Actions
+
+GitHub CI checks: https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/actions
+
+GitHub Actions Linux runner par tests run karta hai; ye tumhara phone ya personal computer scan nahi karta.
+
+## Privacy
+
+- Browser demo: no external analytics or data-submission API.
+- JSON file import: browser mein locally parse hoti hai. 1 MB file-size limit.
+- **SIMULATED DEMO** = fictional data; **IMPORTED REPORT — UNVERIFIED** = user-supplied file with no automatic authentication.
+- Never publish real office/server diagnostic reports without authorization.
+
+## LinkedIn
+
+Project ka public title **OpsPulse — Linux IT Diagnostics Toolkit** rakho.
+Demonstration link ko **Interactive Simulated Demo** hi describe karo; production/live monitoring claim mat karo.

@@ -2,7 +2,7 @@
 
 **Read-only, privacy-conscious Linux diagnostics in Python.** A compact professional IT Support learning project that collects useful machine-health signals and generates a self-contained HTML dashboard and machine-readable JSON report.
 
-> **Project status:** Working v0.1 MVP. Not an enterprise monitoring agent or a substitute for an incident investigation. GitHub Actions runs against its own temporary Linux runner—not your personal iPhone/Mac/office server. Demo reports are **fictional** and explicitly labelled.
+> **Project status:** Working v0.2 interactive MVP. Not an enterprise monitoring agent or a substitute for an incident investigation. GitHub Actions runs against its own temporary Linux runner—not your personal iPhone/Mac/office server. Demo reports are **fictional** and explicitly labelled.
 
 ![Python stdlib](https://img.shields.io/badge/Python-3.11%2B-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-informational) ![Platform: Linux](https://img.shields.io/badge/Live%20diagnostics-Linux-only-green)
 
@@ -43,17 +43,35 @@ python3 -m opspulse --dns example.com --tcp example.com --port 443 --service ssh
 
 **Network notice:** The optional network probes contact the host you specify, and they can generate logs on that destination; use approved targets only. `--service ssh` checks the **local** machine. If systemd is unavailable, the check reports skipped. By default, no external network connections are attempted.
 
-## Demo from any laptop or iPhone browser
+## Interactive demo from any laptop or iPhone browser
 
-You can preview a **fictional** report without Linux:
+**Public interactive demonstration:** https://hey-nawazsharif.github.io/Linux-IT-diagnostics-toolkit/
+
+The GitHub Pages app (`docs/index.html` + `docs/app.js`) now provides:
+
+- **Run simulated diagnostics** using four fictional scenarios (baseline, healthy, warnings, critical).
+- Filter by health status, search checks and open relevant troubleshooting guidance.
+- Download the current report as JSON, or print/save the dashboard.
+- **Open an OpsPulse JSON report locally in the browser** to inspect a real machine's output without uploading it. Uploaded files are treated as *unverified claims*, and all text is rendered safely. File size limited to 1 MB.
+- Completely browser-side functionality: **no scans of the visitor's device, no remote API calls, analytics, tracking, accounts or paid hosting requirements**. Fictional demo measurements are labelled `SIMULATED DEMO`.
+
+To produce an actual point-in-time report, run the CLI on an **authorised Linux machine** (Python 3.11+):
 
 ```bash
-python3 -m opspulse --demo --out-dir docs
+python3 -m opspulse --out-dir reports
 ```
 
-Open `docs/index.html`, or once deployed, view the GitHub Pages sample from `/docs` (repository Settings → Pages → Deploy from branch `main` → `/docs`). The sample is NOT evidence of measurements on a real user machine. All fake values are prominently labelled.
+Then use **Open a local JSON report** on the website and select `reports/report.json`. Review its contents and your organisation's policy before sharing any report. The browser does **not** remotely read CPU or network metrics; a static GitHub Pages site has no permission or backend to do so.
 
-On iPhone, GitHub Actions can run Python unit tests on GitHub's Linux-hosted runner; a standard iPhone app cannot collect another Linux system's CPU, memory, disks, and services without an actual Linux endpoint. You do not need to install Python on the phone for this project.
+The collector can also generate a separate, fully offline fictional HTML/JSON example:
+
+```bash
+python3 -m opspulse --demo --out-dir reports/demo
+```
+
+Open `reports/demo/index.html` locally. Do **not** run the CLI demo with `--out-dir docs` in your source checkout, as that overwrites the interactive site's `docs/index.html`.
+
+On iPhone, GitHub Actions can run unit tests using a temporary GitHub-hosted Linux runner; it **does not measure your iPhone or any office machine**. You do not need Python installed on the phone for the browser dashboard.
 
 ## Exit status
 
@@ -89,13 +107,14 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q opspulse tests
 ```
 
-CI in `.github/workflows/ci.yml` repeats the tests and produces an example dashboard (no account secrets required).
+CI in `.github/workflows/ci.yml` repeats Python and Node tests, validates the interactive browser dashboard, and produces a separate offline demo report (no account secrets required).
 
 ## Roadmap
 
 - [x] Read-only Linux system diagnostics
 - [x] Responsive offline HTML and JSON reports
 - [x] Unit tests, GitHub Actions example
+- [x] Interactive GitHub Pages simulated scenarios, report filtering and local JSON viewer
 - [ ] Optional alert threshold configuration and recurring health history
 - [ ] Windows PowerShell adapter, separate from the Linux collector
 - [ ] Dashboard UI for multiple **authorised** hosts and ticket history
