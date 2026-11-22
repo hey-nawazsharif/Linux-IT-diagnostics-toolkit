@@ -73,7 +73,7 @@ test("browser demo contains all controls and explicit privacy limitations", () =
   for (const id of ["seed-report","scenario","run","reset","report-file","export","view-json","json-viewer","json-data","download-link","quick-result","action-plan-list","action-summary","print","search","stats","diagnostic-grid","feedback","mode-badge","context","copy-command"]) {
     assert.match(html,new RegExp('id="'+id+'"'),"Missing browser control "+id);
   }
-  assert.match(html,/src="\.\/app\.js\?v=20261122-4"/);
+  assert.match(html,/src="\.\/app\.js\?v=20261123-1"/);
   assert.match(html,/SIMULATED DEMO/);
   assert.match(html,/not uploaded to a server/);
   assert.match(html,/cannot read your device/);
@@ -93,7 +93,7 @@ test("iPhone Safari has a native file picker, visible result and manual download
   assert.match(html,/class="native-file"/);
   assert.match(html,/id="download-link"[^>]*hidden/);
   assert.match(html,/id="quick-result"[^>]*role="status"/);
-  assert.match(html,/v0\.4 · Real Linux triage/);
+  assert.match(html,/v0\.5/);
   const js=fs.readFileSync(path.join(__dirname,"../docs/app.js"),"utf8");
   assert.match(js,/download-link/);
   assert.match(js,/View.*JSON|json-viewer/);
@@ -139,4 +139,23 @@ test("new Linux diagnostics have safe local recommendations", () => {
   for(const id of ["inodes","swap","tcp"]) assert.match(js,new RegExp("    "+id+":"));
   assert.match(html,/id="triage-title"/);
   assert.match(html,/schema_version":"1\.1"/);
+});
+
+
+test("v0.5 is an accessible, compact operations console instead of a decorative landing page", () => {
+  assert.match(html,/color-scheme:light/);
+  assert.match(html,/class="app"/);
+  assert.match(html,/class="rail"/);
+  assert.match(html,/id="workspace"/);
+  assert.match(html,/class="topbar"/);
+  assert.match(html,/id="report-tools"/);
+  assert.match(html,/id="findings"/);
+  assert.match(html,/id="run-guide"/);
+  assert.match(html,/role="note"/);
+  assert.match(html,/href="#workspace"/);
+  assert.match(html,/Skip to diagnostic workspace/);
+  assert.match(html,/text-underline-offset/);
+  assert.doesNotMatch(html,/radial-gradient/);
+  assert.doesNotMatch(html,/Explore Linux diagnostics\. Understand the signals/);
+  assert.match(html,/This workspace is showing fictional learning data/);
 });
