@@ -44,7 +44,9 @@ jobs:
           assert sample['mode'] == 'SIMULATED DEMO'
           assert 'id="run"' in website
           assert 'id="report-file"' in website
-          assert 'src="./app.js"' in website
+          assert 'src="./app.js?v=20261122-3"' in website
+          assert 'id="quick-result"' in website
+          assert 'id="download-link"' in website
           assert Path('docs/app.js').exists()
           print('PASS: standalone CLI report and interactive GitHub Pages demo are distinct and valid')
           PY
