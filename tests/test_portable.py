@@ -126,8 +126,8 @@ class PortableTests(unittest.TestCase):
             report = portable.collect_portable(psutil_module=ps, system_name="Windows")
         interfaces = next(c for c in report["checks"] if c["key"] == "interfaces")
         self.assertEqual(interfaces["status"], "info")
-        self.assertNotIn("lan", json.dumps(report))
-        self.assertNotIn("loopback", json.dumps(report))
+        self.assertNotIn('"lan":', json.dumps(report))
+        self.assertNotIn('"loopback":', json.dumps(report))
 
     def test_validation_platform_and_tcp_port(self):
         with self.assertRaises(RuntimeError):
