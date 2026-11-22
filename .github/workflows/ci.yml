@@ -25,6 +25,8 @@ jobs:
         run: node --check docs/app.js
       - name: Test scenarios, report parsing and interactive UI contract
         run: node --test tests/dashboard.test.cjs
+      - name: Exercise real browser UI (Chromium)
+        run: python tests/browser_smoke.py
       - name: Generate clearly marked fictional offline CLI report
         run: python -m opspulse --demo --out-dir reports/demo
       - name: Validate generated demo metadata and hosted interactive demo
