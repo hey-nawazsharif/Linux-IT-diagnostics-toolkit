@@ -35,6 +35,13 @@ class InodeTests(unittest.TestCase):
         self.assertEqual(item["status"], "skip")
         self.assertIn("does not expose", item["detail"])
 
+    def test_windows_absent_statvfs_is_not_an_import_time_crash(self):
+        from unittest.mock import patch
+        with patch.object(collector.os, "statvfs", None, create=True):
+            result = collector.inode_check(Path("/"))
+        self.assertEqual(result["status"], "skip")
+        self.assertEqual(result["value"], "Not supported")
+
     def test_invalid_or_unavailable_inode_data(self):
         self.assertEqual(collector.inode_check(Path("/"), stat=self.fake(100, 200))["status"], "skip")
         def fail(path):
