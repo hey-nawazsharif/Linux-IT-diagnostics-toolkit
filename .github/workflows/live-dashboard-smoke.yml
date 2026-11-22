@@ -22,12 +22,14 @@ jobs:
           fresh=0
           for attempt in $(seq 1 24); do
             if curl --fail --silent --show-error --location --max-time 15 "$BASE/?build=20261123-1" -o /tmp/opspulse.html &&
-               grep -Fq 'v0.5' /tmp/opspulse.html &&
+               grep -Fq 'v0.6 beta' /tmp/opspulse.html &&
                grep -Fq 'id="quick-result"' /tmp/opspulse.html &&
                grep -Fq 'id="download-link"' /tmp/opspulse.html &&
                grep -Fq 'id="action-plan-list"' /tmp/opspulse.html &&
                grep -Fq 'System diagnostics' /tmp/opspulse.html &&
-               grep -Fq 'class="rail"' /tmp/opspulse.html; then
+               grep -Fq 'class="rail"' /tmp/opspulse.html &&
+               grep -Fq 'id="desktop-downloads"' /tmp/opspulse.html &&
+               grep -Fq 'Linux-IT-diagnostics-toolkit/releases' /tmp/opspulse.html; then
               fresh=1
               break
             fi
