@@ -24,12 +24,24 @@ a{color:var(--green);text-underline-offset:4px}a:hover{color:#b7ffed}button,sele
 @media(max-width:830px){.stats{grid-template-columns:repeat(3,1fr)}.explain{grid-template-columns:1fr}}
 @media(max-width:620px){.hero{padding-top:35px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat{padding:15px}.stat strong{font-size:29px}.grid{grid-template-columns:1fr}.card{padding:18px}.controls{padding:17px}.tools .button{flex:1 1 160px}.selector{flex-basis:100%}.secondary-tools .button,.upload-label{flex:1 1 130px}.brand small{display:block;margin:0}.value{font-size:20px}.hero h1{font-size:34px}}
 @media print{body{background:white;color:#101820}.site-header,.controls,.filters,.site-footer,.note .button,.pill,.feedback{display:none!important}.hero{padding-top:15px}.lead,.card p,.note p,.note li,.meta,.stat span{color:#40464b}.grid{grid-template-columns:repeat(2,1fr)}.card,.stat,.note,.context{background:white;color:#111;border-color:#aaa;break-inside:avoid}.context{border-left-color:#444}.flag{color:#111!important;background:#e9eef1!important}.section-heading h2{color:#111}a{color:#14554d}}
+.quick-result{border-radius:9px;border:1px solid #638f9b;background:#123f41;color:#f0fffb;padding:13px 16px;margin:16px 0 0;font-size:16px;font-weight:800;line-height:1.5}
+.quick-result[data-level=warn]{border-color:#8e7047;background:#3f3222;color:#ffe4ab}
+.quick-result[data-level=critical]{border-color:#ab5d69;background:#4b2730;color:#ffd8df}
+.native-file-wrap{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:7px 0}
+.native-file{max-width:100%;font-size:14px;color:#d3e9f0;background:transparent}
+.native-file::file-selector-button{background:#1d4657;color:white;border:1px solid #6595a5;border-radius:7px;padding:10px 12px;margin-right:10px;font:inherit;font-weight:600}
+.json-viewer{border-top:1px solid var(--border);padding-top:15px;margin-top:14px}
+.json-viewer label{display:block;font-size:13px;color:#c7e2e7;margin-bottom:6px}
+.json-viewer textarea{display:block;width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:8px;background:#081723;color:#d0f1e5;border:1px solid #436576;font:12px/1.55 ui-monospace,Consolas,monospace}
+#download-link{margin-top:12px}
+.version-label{font-size:11px;color:#a4becb;margin-left:8px}
+@media(max-width:620px){.quick-result{font-size:15px}.native-file-wrap{display:block}.native-file{width:100%}}
 </style>
 <script id="seed-report" type="application/json">{"schema_version":"1.0","tool":"OpsPulse — Linux IT Diagnostics Toolkit","mode":"SIMULATED DEMO","generated_utc":"2026-11-22T17:29:24+00:00","privacy":"No passwords, environment variables, IP addresses, MAC addresses or username/hostname inventory are collected.","network_probes":"SIMULATED — no real network connections were made.","checks":[{"key":"cpu","label":"CPU load pressure","status":"pass","value":"0.42 load / 8 logical CPUs","detail":"Example 1-minute load. No real computer was inspected.","category":"system"},{"key":"ram","label":"Memory availability","status":"pass","value":"44.0% in use","detail":"Simulated 16.0 GiB total RAM; values are illustrations.","category":"system"},{"key":"disk","label":"Root filesystem","status":"warn","value":"87.0% used","detail":"Simulated disk space warning. An operator could review old logs or adjust capacity.","category":"storage"},{"key":"uptime","label":"System uptime","status":"info","value":"5 days, 9 hours","detail":"Illustrative uptime.","category":"system"},{"key":"interfaces","label":"Network interfaces","status":"pass","value":"1 up / 2 non-loopback","detail":"Interface names, IPs and MACs are intentionally hidden.","category":"network"},{"key":"dns","label":"DNS resolution","status":"pass","value":"Resolved","detail":"Simulated external check to example.com, not executed.","category":"network"},{"key":"service","label":"Service ssh","status":"pass","value":"Active","detail":"Simulated service status, not tested on a live server.","category":"service"},{"key":"backup","label":"Backup restore verification","status":"skip","value":"Not tested","detail":"A live restore needs separate manual evidence; this tool does not claim to validate backups.","category":"service"}],"summary":{"pass":5,"warn":1,"critical":0,"info":1,"skip":1}}</script>
-<script src="./app.js" defer></script>
+<script src="./app.js?v=20261122-3" defer></script>
 </head>
 <body>
-<header class="site-header"><div class="wrap header-inner"><div class="brand">Ops<b>Pulse</b><small>Linux IT Diagnostics Lab</small></div>
+<header class="site-header"><div class="wrap header-inner"><div class="brand">Ops<b>Pulse</b><small>Linux IT Diagnostics Lab <span class="version-label">v0.3 · Mobile fixes</span></small></div>
 <nav class="header-nav" aria-label="Project links"><a href="https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit" target="_blank" rel="noopener noreferrer">GitHub source</a><a href="https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit#quick-start-on-linux" target="_blank" rel="noopener noreferrer">Linux instructions</a></nav></div></header>
 <main class="wrap">
 <section class="hero" aria-labelledby="page-title"><div class="eyebrow">Practical IT troubleshooting · browser demo</div>
@@ -44,12 +56,16 @@ a{color:var(--green);text-underline-offset:4px}a:hover{color:#b7ffed}button,sele
 <select id="scenario"><option value="baseline">Original example — disk warning</option><option value="healthy">Healthy system</option><option value="disk">Memory and disk warnings</option><option value="critical">Critical resource pressure</option></select></div>
 <button type="button" class="button primary" id="run">Run simulated diagnostics</button>
 <button type="button" class="button" id="reset">Reset demo</button></div>
+<p class="quick-result" id="quick-result" data-level="warn" role="status" aria-live="polite">Simulation · 0 critical · 1 attention · 5 healthy</p>
 <div class="secondary-tools">
-<label class="button upload-label" for="report-file">Open a local JSON report <input id="report-file" type="file" accept=".json,application/json" aria-label="Open OpsPulse JSON report from this device"></label>
+<div class="native-file-wrap"><label for="report-file">Import report:</label> <input id="report-file" class="native-file" type="file" accept=".json,application/json" aria-label="Choose a local OpsPulse JSON report"></div>
 <button type="button" id="export" class="button">Download JSON</button>
+<button type="button" id="view-json" class="button">View / Copy JSON</button>
 <button type="button" id="print" class="button">Print / Save PDF</button>
 </div>
-<p class="fineprint">Local-only: uploaded JSON is read by your browser and is not sent to GitHub, this website or a server. Review files for sensitive information before sharing.</p>
+<p class="fineprint">Local-only: selected JSON is read by your browser, not uploaded to a server. For iPhone, use the native Choose File control; download fallback is available below. Review reports before sharing.</p>
+<a id="download-link" class="button" hidden download="opspulse-simulated-demo.json">Save JSON file (tap here on iPhone)</a>
+<div id="json-viewer" class="json-viewer" hidden><label for="json-data">Report JSON — select text to copy on iPhone</label><textarea id="json-data" readonly spellcheck="false" aria-label="Report JSON for copying"></textarea></div>
 <p id="feedback" class="feedback" role="status" aria-live="polite">Dashboard initialising…</p>
 </section>
 <section aria-labelledby="overview-title"><div class="section-heading"><h2 id="overview-title">Health overview</h2><p id="count-line">8 checks in this report</p></div>

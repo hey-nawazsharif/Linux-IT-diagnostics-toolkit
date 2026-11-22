@@ -70,12 +70,12 @@ test("parser rejects malformed or unsafe status schemas", () => {
 });
 
 test("browser demo contains all controls and explicit privacy limitations", () => {
-  for (const id of ["seed-report","scenario","run","reset","report-file","export","print","search","stats","diagnostic-grid","feedback","mode-badge","context","copy-command"]) {
+  for (const id of ["seed-report","scenario","run","reset","report-file","export","view-json","json-viewer","json-data","download-link","quick-result","print","search","stats","diagnostic-grid","feedback","mode-badge","context","copy-command"]) {
     assert.match(html,new RegExp('id="'+id+'"'),"Missing browser control "+id);
   }
-  assert.match(html,/src="\.\/app\.js"/);
+  assert.match(html,/src="\.\/app\.js\?v=20261122-3"/);
   assert.match(html,/SIMULATED DEMO/);
-  assert.match(html,/not sent to GitHub/);
+  assert.match(html,/not uploaded to a server/);
   assert.match(html,/cannot read your device/);
   assert.match(html,/github\.com\/hey-nawazsharif\/Linux-IT-diagnostics-toolkit/);
 });
@@ -86,4 +86,18 @@ test("No external dashboard dependency or API integration", () => {
   assert.match(js,/textContent\s*=/); // imports rendered as text, not HTML
   assert.doesNotMatch(js,/\.innerHTML\s*=/);
   assert.match(js,/file\.text\(\)/);
+});
+
+
+test("iPhone Safari has a native file picker, visible result and manual download fallback", () => {
+  assert.match(html,/class="native-file"/);
+  assert.match(html,/id="download-link"[^>]*hidden/);
+  assert.match(html,/id="quick-result"[^>]*role="status"/);
+  assert.match(html,/v0\.3 · Mobile fixes/);
+  const js=fs.readFileSync(path.join(__dirname,"../docs/app.js"),"utf8");
+  assert.match(js,/download-link/);
+  assert.match(js,/View.*JSON|json-viewer/);
+  assert.match(js,/typeof file\.text === "function"/);
+  assert.match(js,/FileReader/);
+  assert.doesNotMatch(js,/setTimeout\(\(\)=>URL\.revokeObjectURL/);
 });
