@@ -15,12 +15,44 @@
     interfaces: "Confirm the expected interfaces are up and check approved network paths. Interface count is not an end-to-end connectivity test.",
     dns: "Compare configured DNS resolution and the application's required hostname. DNS resolution alone does not prove service availability.",
     service: "Check the relevant systemd service status, recent logs and application-level health. Active status alone cannot prove end-to-end function.",
-    backup: "Restore an independent backup to an isolated test environment and document results. This dashboard never verifies backup recovery."
+    backup: "Restore an independent backup to an isolated test environment and document results. This dashboard never verifies backup recovery.",
+    inodes: "Run df -i on the Linux host. File creation can fail when inodes are exhausted even with free disk bytes; review small-file growth and retention safely.",
+    swap: "Swap occupancy alone is not proof of current memory pressure. Check MemAvailable and actual paging behaviour before changing configuration.",
+    tcp: "Review the target service, firewall, authorised routes and listening ports. A successful TCP handshake does not verify TLS or the application."
   };
   function cleanText(value, cap) {
     if (typeof value !== "string") throw new Error("Each report field must be text.");
     if (value.length > cap) throw new Error("Report field exceeds length limit.");
     return value;
+  }
+  function suggestedPlan(checks) {
+    const priority = {critical:0,warn:1,skip:2};
+    return checks.filter(c => c.status in priority).map(c => ({
+      check_key:c.key,
+      label:c.label,
+      priority:c.status === "skip" ? "verification" : c.status,
+      observed:c.value,
+      next_steps:[RECOMMENDATIONS[c.key] || "Review the check's scope, the logs and operational requirements before changing anything."]
+    })).sort((a,b)=>(priority[a.priority === "verification" ? "skip" : a.priority] -
+                       priority[b.priority === "verification" ? "skip" : b.priority]));
+  }
+  function importActionPlan(value, checks) {
+    if (value == null) return suggestedPlan(checks);
+    if (!Array.isArray(value) || value.length > 100) throw new Error("Invalid action plan format.");
+    return value.map(item => {
+      if (!item || typeof item !== "object" || Array.isArray(item) ||
+          !["critical","warn","verification"].includes(item.priority) ||
+          !Array.isArray(item.next_steps) || item.next_steps.length > 6) {
+        throw new Error("Invalid action plan entry.");
+      }
+      return {
+        check_key:cleanText(item.check_key,80),
+        label:cleanText(item.label,160),
+        priority:item.priority,
+        observed:cleanText(item.observed,500),
+        next_steps:item.next_steps.map(step => cleanText(step,900))
+      };
+    });
   }
   function normalizeReport(input) {
     if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Expected a JSON report object.");
@@ -47,7 +79,7 @@
       generated_utc: typeof input.generated_utc === "string" ? input.generated_utc.slice(0, 90) : "",
       privacy: typeof input.privacy === "string" ? input.privacy.slice(0, 500) : "",
       network_probes: typeof input.network_probes === "string" ? input.network_probes.slice(0, 500) : "",
-      checks, summary
+      checks, summary, action_plan:importActionPlan(input.action_plan, checks)
     };
   }
   function scenarioReport(seed, scenario, now) {
@@ -83,6 +115,7 @@
     report.mode = "SIMULATED DEMO";
     report.generated_utc = now || new Date().toISOString();
     report.network_probes = "SIMULATED — the browser did not probe any machine or network.";
+    report.action_plan = suggestedPlan(report.checks);
     report.summary = Object.fromEntries(STATUSES.map(status => [status, report.checks.filter(c => c.status === status).length]));
     return report;
   }
@@ -162,8 +195,28 @@
       $("filtered-count").textContent = "Showing " + filtered.length + " of " + state.report.checks.length + " checks";
       $("empty").hidden = filtered.length !== 0;
     }
+    function renderActionPlan() {
+      const box = $("action-plan-list");
+      box.replaceChildren();
+      const plan = state.report.action_plan || suggestedPlan(state.report.checks);
+      $("action-summary").textContent = plan.length
+        ? plan.length + " follow-up item" + (plan.length === 1 ? "" : "s") +
+          " · Suggested investigations, never automatic repairs"
+        : "No warning or unverified checks in this report. This is not a complete health audit.";
+      for (const item of plan.slice(0, 25)) {
+        const card = safeNode("article","action-card "+item.priority);
+        const label = item.priority === "critical" ? "CRITICAL" :
+                      item.priority === "warn" ? "ATTENTION" : "NOT VERIFIED";
+        card.append(safeNode("h3","",label+" · "+item.label),
+                    safeNode("p","", "Reported: "+item.observed));
+        const list = safeNode("ol","");
+        for (const step of item.next_steps) list.append(safeNode("li","",step));
+        card.append(list);
+        box.append(card);
+      }
+    }
     function render() {
-      counts(); cards(); updateQuickResult();
+      counts(); cards(); updateQuickResult(); renderActionPlan();
       $("mode-badge").textContent = state.imported ? "IMPORTED REPORT — UNVERIFIED" : "SIMULATED DEMO";
       $("mode-badge").className = "pill " + (state.imported ? "imported" : "demo");
       $("context").textContent = state.imported ?
