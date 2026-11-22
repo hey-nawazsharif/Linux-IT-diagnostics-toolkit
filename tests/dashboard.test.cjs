@@ -75,7 +75,7 @@ test("browser demo contains all controls and explicit privacy limitations", () =
   }
   assert.match(html,/src="\.\/app\.js\?v=20261122-3"/);
   assert.match(html,/SIMULATED DEMO/);
-  assert.match(html,/not sent to GitHub/);
+  assert.match(html,/not uploaded to a server/);
   assert.match(html,/cannot read your device/);
   assert.match(html,/github\.com\/hey-nawazsharif\/Linux-IT-diagnostics-toolkit/);
 });
