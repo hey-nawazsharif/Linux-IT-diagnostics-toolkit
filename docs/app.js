@@ -93,7 +93,21 @@
   document.addEventListener("DOMContentLoaded", function () {
     const $ = id => document.getElementById(id);
     const initial = JSON.parse($("seed-report").textContent);
-    const state = {report: scenarioReport(initial,"baseline",initial.generated_utc), imported:false, filter:"all", query:""};
+    const state = {report: scenarioReport(initial,"baseline",initial.generated_utc), imported:false, filter:"all", query:"", downloadUrl:null};
+    const mobileHint = document.getElementById("quick-result");
+    function updateQuickResult() {
+      const data=state.report.summary;
+      mobileHint.textContent = state.imported
+        ? "Imported file · " + data.critical + " critical · " + data.warn + " attention · " + data.pass + " healthy (unverified)"
+        : "Simulation · " + data.critical + " critical · " + data.warn + " attention · " + data.pass + " healthy";
+      mobileHint.dataset.level = data.critical ? "critical" : data.warn ? "warn" : "pass";
+    }
+    function showJsonText() {
+      const preview = $("json-viewer");
+      preview.hidden = false;
+      $("json-data").value = JSON.stringify(state.report,null,2);
+    }
+
     function safeNode(tag, cls, value) {
       const element = document.createElement(tag);
       if (cls) element.className = cls;
@@ -139,7 +153,7 @@
       $("empty").hidden = filtered.length !== 0;
     }
     function render() {
-      counts(); cards();
+      counts(); cards(); updateQuickResult();
       $("mode-badge").textContent = state.imported ? "IMPORTED REPORT — UNVERIFIED" : "SIMULATED DEMO";
       $("mode-badge").className = "pill " + (state.imported ? "imported" : "demo");
       $("context").textContent = state.imported ?
@@ -161,10 +175,14 @@
       state.query = "";
       $("search").value = "";
       render();
-      message("Scenario loaded: " + $("scenario").selectedOptions[0].textContent +
-        ". These are simulated values; no hardware or network was inspected.","success");
+      message("Loaded " + $("scenario").selectedOptions[0].textContent +
+        ". Counts above and results below have changed. This is simulated, not a hardware scan.","success");
     }
     $("run").addEventListener("click", () => startScenario($("scenario").value));
+    $("scenario").addEventListener("change", () => {
+      message("Selected: " + $("scenario").selectedOptions[0].textContent +
+        ". Tap Run simulated diagnostics to update the result.","info");
+    });
     $("reset").addEventListener("click", () => {
       $("scenario").value="baseline";
       $("report-file").value="";
@@ -180,7 +198,16 @@
       if (!file) return;
       if (file.size > 1024*1024) {message("File is too large (maximum 1 MB).","error");event.target.value="";return;}
       try {
-        const raw=JSON.parse(await file.text());
+        // File.text() is supported in modern iOS Safari. Keep a FileReader fallback
+        // for restricted in-app browsers that lack the method.
+        const fileContent = typeof file.text === "function" ? await file.text() :
+          await new Promise((resolve,reject) => {
+            const reader=new FileReader();
+            reader.onload=() => resolve(String(reader.result || ""));
+            reader.onerror=() => reject(new Error("Could not read the selected file"));
+            reader.readAsText(file);
+          });
+        const raw=JSON.parse(fileContent);
         const report=normalizeReport(raw);
         state.report=report;state.imported=true;state.filter="all";state.query="";
         $("search").value="";
@@ -192,15 +219,30 @@
       } finally {event.target.value="";}
     });
     $("export").addEventListener("click",()=>{
-      const file=new Blob([JSON.stringify(state.report,null,2)+"\n"],{type:"application/json"});
-      const link=document.createElement("a");
-      const uri=URL.createObjectURL(file);
-      link.href=uri;
-      link.download=state.imported?"opspulse-imported-report.json":"opspulse-simulated-demo.json";
-      document.body.append(link);link.click();link.remove();
-      setTimeout(()=>URL.revokeObjectURL(uri),1000);
-      message("JSON report prepared for download ("+(state.imported?"imported and unverified":"SIMULATED DEMO")+").","success");
+      const json=JSON.stringify(state.report,null,2)+"\n";
+      const save=$("download-link");
+      if (state.downloadUrl) URL.revokeObjectURL(state.downloadUrl);
+      try {
+        state.downloadUrl=URL.createObjectURL(new Blob([json],{type:"application/json"}));
+        save.href=state.downloadUrl;
+        save.download=state.imported ? "opspulse-imported-unverified.json" : "opspulse-simulated-demo.json";
+        save.hidden=false;
+        showJsonText();
+        // iOS Safari sometimes ignores a programmatic download; leave an
+        // accessible, user-tappable link and copyable JSON visible as fallback.
+        save.click();
+        message("Report ready. If no download appeared on iPhone, tap Save JSON file or copy the JSON below.","success");
+      } catch(error) {
+        showJsonText();
+        message("Automatic download unavailable here. Copy the JSON text shown below.","error");
+      }
     });
+    $("view-json").addEventListener("click",()=>{
+      const preview=$("json-viewer");
+      if (preview.hidden) {showJsonText();message("Report JSON displayed below. You can select and copy it.","info");}
+      else {preview.hidden=true;message("JSON preview closed.","info");}
+    });
+    window.addEventListener("pagehide",()=>{if(state.downloadUrl)URL.revokeObjectURL(state.downloadUrl);});
     $("print").addEventListener("click",()=>window.print());
     $("copy-command").addEventListener("click",async()=>{
       const cmd="python3 -m opspulse --out-dir reports";
@@ -208,7 +250,13 @@
         await navigator.clipboard.writeText(cmd);
         message("Linux diagnostic command copied. Run only on a Linux system you own or administer.","success");
       } catch (_) {
-        message("Copy unavailable in this browser. Select the command in the Linux instructions below.","error");
+        const commandElement=$("linux-command");
+        const range=document.createRange();
+        range.selectNodeContents(commandElement);
+        const selection=window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        message("Your browser blocked automatic copy. The command is selected—use Copy from the selection menu.","info");
       }
     });
     render();
