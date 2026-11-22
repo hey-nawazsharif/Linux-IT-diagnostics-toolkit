@@ -2,7 +2,7 @@
 
 **Read-only, privacy-conscious Linux diagnostics in Python.** A compact professional IT Support learning project that collects useful machine-health signals and generates a self-contained HTML dashboard and machine-readable JSON report.
 
-> **Project status:** Working v0.4 Linux troubleshooting and interactive-demo MVP. Not an enterprise monitoring agent or a substitute for an incident investigation. GitHub Actions runs against its own temporary Linux runner—not your personal iPhone/Mac/office server. Demo reports are **fictional** and explicitly labelled.
+> **Project status:** Working v0.5 Linux troubleshooting and interactive-demo MVP. Not an enterprise monitoring agent or a substitute for an incident investigation. GitHub Actions runs against its own temporary Linux runner—not your personal iPhone/Mac/office server. Demo reports are **fictional** and explicitly labelled.
 
 ![Python stdlib](https://img.shields.io/badge/Python-3.11%2B-blue) ![License: MIT](https://img.shields.io/badge/License-MIT-informational) ![Platform: Linux](https://img.shields.io/badge/Live%20diagnostics-Linux-only-green)
 
@@ -57,6 +57,8 @@ python3 -m opspulse --dns example.com --tcp example.com --port 443 --service ssh
 **Public interactive demonstration:** https://hey-nawazsharif.github.io/Linux-IT-diagnostics-toolkit/
 
 The GitHub Pages app (`docs/index.html` + `docs/app.js`) now provides:
+
+The browser UI uses a compact, light IT operations-console layout (sidebar navigation, compact status strip, table-like diagnostic checks and investigation plans). It is deliberately a technical tool rather than a promotional landing page.
 
 - **Run simulated diagnostics** using four fictional scenarios (baseline, healthy, warnings, critical).
 - Filter by health status, search checks and open relevant troubleshooting guidance.
