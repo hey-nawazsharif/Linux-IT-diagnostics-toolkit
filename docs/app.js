@@ -107,6 +107,16 @@
       preview.hidden = false;
       $("json-data").value = JSON.stringify(state.report,null,2);
     }
+    function invalidatePriorExport() {
+      // Avoid serving a stale report after a new scenario or import.
+      if (state.downloadUrl) URL.revokeObjectURL(state.downloadUrl);
+      state.downloadUrl = null;
+      $("download-link").hidden = true;
+      $("download-link").removeAttribute("href");
+      if (!$("json-viewer").hidden) {
+        $("json-data").value = JSON.stringify(state.report,null,2);
+      }
+    }
 
     function safeNode(tag, cls, value) {
       const element = document.createElement(tag);
@@ -171,6 +181,7 @@
     function startScenario(selected) {
       state.report = scenarioReport(initial,selected);
       state.imported = false;
+      invalidatePriorExport();
       state.filter = "all";
       state.query = "";
       $("search").value = "";
@@ -210,6 +221,7 @@
         const raw=JSON.parse(fileContent);
         const report=normalizeReport(raw);
         state.report=report;state.imported=true;state.filter="all";state.query="";
+        invalidatePriorExport();
         $("search").value="";
         render();
         message("Imported " + report.checks.length +
