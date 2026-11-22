@@ -93,7 +93,7 @@ test("iPhone Safari has a native file picker, visible result and manual download
   assert.match(html,/class="native-file"/);
   assert.match(html,/id="download-link"[^>]*hidden/);
   assert.match(html,/id="quick-result"[^>]*role="status"/);
-  assert.match(html,/v0\.5/);
+  assert.match(html,/v0\.6 beta/);
   const js=fs.readFileSync(path.join(__dirname,"../docs/app.js"),"utf8");
   assert.match(js,/download-link/);
   assert.match(js,/View.*JSON|json-viewer/);
@@ -158,4 +158,15 @@ test("v0.5 is an accessible, compact operations console instead of a decorative 
   assert.doesNotMatch(html,/radial-gradient/);
   assert.doesNotMatch(html,/Explore Linux diagnostics\. Understand the signals/);
   assert.match(html,/This workspace is showing fictional learning data/);
+});
+
+
+test("desktop beta links are honest and do not imply in-browser host scans", () => {
+  assert.match(html,/id="desktop-downloads"/);
+  assert.match(html,/GitHub Releases|verified beta downloads/);
+  assert.match(html,/Unsigned developer beta/);
+  assert.match(html,/Windows x64/);
+  assert.match(html,/Apple Silicon/);
+  assert.match(html,/This website remains a simulated demo/);
+  assert.match(html,/https:\/\/github\.com\/hey-nawazsharif\/Linux-IT-diagnostics-toolkit\/releases/);
 });
