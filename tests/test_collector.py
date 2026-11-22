@@ -63,7 +63,7 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(collector.dns_check("example.com", resolver=fake_resolver)["status"], "pass")
 
     def test_cpu_is_not_reported_as_percent(self):
-        with patch.object(collector.os, "cpu_count", return_value=4), patch.object(collector.os, "getloadavg", return_value=(2.0, 1.0, 1.0)):
+        with patch.object(collector.os, "cpu_count", return_value=4), patch.object(collector.os, "getloadavg", return_value=(2.0, 1.0, 1.0), create=True):
             c = collector.cpu_check()
         self.assertEqual(c["status"], "pass")
         self.assertNotIn("utilization percent.", c["value"])
