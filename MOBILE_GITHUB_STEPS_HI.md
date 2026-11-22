@@ -1,14 +1,28 @@
-# iPhone se GitHub repository banana (sirf ek baar)
+# OpsPulse — iPhone se GitHub project kaise check karein
 
-**Code, tests, sample HTML report, README, license aur CI files already ready hain. Aapko code nahi likhna hai.**
+**Status: Source code successfully published, GitHub Actions CI passed (13 unit tests).** Is repository mein Python diagnostics tool, self-contained HTML dashboard, simulated demo report, tests aur MIT license available hain.
 
-1. iPhone par Safari mein https://github.com/new kholo aur GitHub mein login karo.
-2. Repository owner apna account `hey-nawazsharif` select karo.
-3. Repository name: `linux-it-diagnostics-toolkit`
-4. Description (optional): `Read-only Linux system diagnostics with offline HTML reports, Python and GitHub Actions.`
-5. Visibility **Public** rakho (LinkedIn portfolio ke liye). **Add a README**, **.gitignore**, aur **license** ke automatic boxes ko unchecked rakho — project files ke andar ye sab already hain.
-6. **Create repository** dabao, phir uska link chat mein bhejo, ideally: `https://github.com/hey-nawazsharif/linux-it-diagnostics-toolkit`
+## Project ke source aur automated tests
 
-GitHub account mein jo required approval / GitHub app access ho, use aap hi allow karna hoga. Uske baad files upload, CI checks, screenshot/demo validation aur LinkedIn project description mein main help kar sakta hoon.
+- Repository: https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit
+- GitHub Actions: https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/actions
+- Public sample HTML source: https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/blob/main/docs/index.html
+- README: https://github.com/hey-nawazsharif/Linux-IT-diagnostics-toolkit/blob/main/README.md
 
-Note: GitHub Actions runner ka Linux report aapke iPhone ya home computer ki health report nahi hota; woh runner ki temporary machine hoti hai.
+## Optional: iPhone se public demo webpage enable karein
+
+1. Safari mein repository kholo; GitHub ke desktop-mode site ki zarurat pad sakti hai.
+2. **Settings** > **Pages** kholo.
+3. **Build and deployment** > **Source: Deploy from a branch** select karo.
+4. Branch **main** aur folder **/docs** select karo; **Save** dabao.
+5. GitHub Pages deploy hone ke baad expected preview URL:
+   https://hey-nawazsharif.github.io/Linux-IT-diagnostics-toolkit/
+6. Demo page par **SIMULATED DEMO** likha hua verify karo. Ye real machine report nahi hai.
+
+## Practical boundaries
+
+- Reports generated in GitHub Actions reflect the temporary Linux runner, not your iPhone, MacBook or private office network.
+- Demo data are fictional and explicitly labelled.
+- A Linux machine is needed for real local diagnostics; app code is read-only by default.
+- **Do not publish live diagnostic reports from business machines without permission and review.**
+- GitHub repository aur CI kaam kar rahe hain; GitHub Pages optional hai, enabling requires repository settings access.
